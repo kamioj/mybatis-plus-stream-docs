@@ -88,7 +88,8 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', href: (process.env.VITEPRESS_BASE || '/mybatis-plus-stream-docs/') + 'favicon.ico' }],
     ['meta', { name: 'keywords', content: 'MyBatis-Plus,Stream,流式查询,Lambda,连表查询,MyBatis增强,Java,Spring Boot' }],
-    ['meta', { name: 'author', content: 'kamioj' }]
+    ['meta', { name: 'author', content: 'kamioj' }],
+    ['meta', { name: 'baidu-site-verification', content: 'codeva-UlKBtXyDpT' }]
   ],
   themeConfig: {
     nav: [
