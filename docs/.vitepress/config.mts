@@ -82,8 +82,13 @@ export default defineConfig({
   description: 'MyBatis-Plus 流式增强框架 —— 让数据库操作像写 Java Stream 一样优雅',
   lang: 'zh-CN',
   base: process.env.VITEPRESS_BASE || '/mybatis-plus-stream-docs/',
+  sitemap: {
+    hostname: 'https://mybatis-plus-stream-docs.545329844.workers.dev'
+  },
   head: [
-    ['link', { rel: 'icon', href: (process.env.VITEPRESS_BASE || '/mybatis-plus-stream-docs/') + 'favicon.ico' }]
+    ['link', { rel: 'icon', href: (process.env.VITEPRESS_BASE || '/mybatis-plus-stream-docs/') + 'favicon.ico' }],
+    ['meta', { name: 'keywords', content: 'MyBatis-Plus,Stream,流式查询,Lambda,连表查询,MyBatis增强,Java,Spring Boot' }],
+    ['meta', { name: 'author', content: 'kamioj' }]
   ],
   themeConfig: {
     nav: [
