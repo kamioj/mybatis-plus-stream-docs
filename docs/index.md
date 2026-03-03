@@ -37,6 +37,24 @@ features:
     details: 基于 MyBatis-Plus 3.5.9 增强，Service 接口继承即用，无需修改现有代码
 ---
 
+## 安装
+
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.kamioj/mybatis-plus-stream-boot-starter)](https://central.sonatype.com/artifact/io.github.kamioj/mybatis-plus-stream-boot-starter)
+
+::: code-group
+```xml [Maven]
+<dependency>
+    <groupId>io.github.kamioj</groupId>
+    <artifactId>mybatis-plus-stream-boot-starter</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```groovy [Gradle]
+implementation 'io.github.kamioj:mybatis-plus-stream-boot-starter:1.0.0'
+```
+:::
+
 ## 一分钟上手
 
 ```java
@@ -45,17 +63,17 @@ public interface UserService extends IMysqlServiceBase<User> {}
 
 // 2. 像写 Stream 一样查询
 List<User> users = userService.stream()
-    .filter(w -> w.eq(User::getRole, "user"))
-    .sorted(o -> o.orderDesc(User::getId))
+    .filter(where -> where.eq(User::getRole, "user"))
+    .sorted(order -> order.orderDesc(User::getId))
     .limit(10)
     .collect(Collectors.toList());
 
 // 3. 连表 + 分组 + 聚合，一行搞定
 List<UserDTO> stats = userService.listGroupJoin(
-    j -> j.leftJoin(Order.class, User::getId, Order::getUserId),
-    g -> g.groupBy(User::getId),
-    w -> w.eq(User::getRole, "user"),
-    s -> s.select(User::getUsername, UserDTO::getUsername)
-          .selectFunc(x -> x.count(), UserDTO::getOrderCount),
+    join -> join.leftJoin(Order.class, User::getId, Order::getUserId),
+    group -> group.groupBy(User::getId),
+    where -> where.eq(User::getRole, "user"),
+    select -> select.select(User::getUsername, UserDTO::getUsername)
+          .selectFunc(func -> func.count(), UserDTO::getOrderCount),
     UserDTO.class);
 ```
