@@ -14,7 +14,7 @@ hero:
       link: /pages/core/service/get
     - theme: alt
       text: GitHub
-      link: https://github.com/kamioj/mybatis-plus-stream-docs
+      link: https://github.com/kamioj/mybatis-plus-stream-boot-starter
 
 features:
   - icon: 🚀
