@@ -81,9 +81,9 @@ export default defineConfig({
   title: 'MyBatis-Plus Stream',
   description: 'MyBatis-Plus 流式增强框架 —— 让数据库操作像写 Java Stream 一样优雅',
   lang: 'zh-CN',
-  base: '/mybatis-plus-stream-docs/',
+  base: process.env.VITEPRESS_BASE || '/mybatis-plus-stream-docs/',
   head: [
-    ['link', { rel: 'icon', href: '/mybatis-plus-stream-docs/favicon.ico' }]
+    ['link', { rel: 'icon', href: (process.env.VITEPRESS_BASE || '/mybatis-plus-stream-docs/') + 'favicon.ico' }]
   ],
   themeConfig: {
     nav: [
