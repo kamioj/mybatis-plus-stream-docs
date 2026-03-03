@@ -1,4 +1,8 @@
 {
   "name": "mybatis-plus-stream-docs",
-  "pages_build_output_dir": "docs/.vitepress/dist"
+  "pages_build_output_dir": "docs/.vitepress/dist",
+  "compatibility_date": "2026-03-03",
+  "assets": {
+    "directory": "docs/.vitepress/dist"
+  }
 }
