@@ -90,13 +90,13 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '文档', link: '/pages/quickstart/introduce' },
       { text: '常见问题', link: '/pages/reference/faq' },
-      { text: 'GitHub', link: 'https://github.com/kamioj/mybatis-plus-stream-docs' }
+      { text: 'GitHub', link: 'https://github.com/kamioj/mybatis-plus-stream-boot-starter' }
     ],
     sidebar: {
       '/pages/': sidebar
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/kamioj/mybatis-plus-stream-docs' }
+      { icon: 'github', link: 'https://github.com/kamioj/mybatis-plus-stream-boot-starter' }
     ],
     footer: {
       message: '基于 MIT 许可发布',
