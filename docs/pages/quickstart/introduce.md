@@ -73,6 +73,32 @@ List<UserDTO> top = userService.stream()
 | 行锁 NOWAIT / WAIT n | ❌ | ✅ |
 | 逻辑删除 | ✅ | ✅ + `withDeleted()` |
 
+## 与 mybatis-plus-join 的差异
+
+[mybatis-plus-join](https://github.com/yulichang/mybatis-plus-join)（简称 MPJ）也是 MP 的扩展库，社区常被一起提到。但**两者的定位与强项很不一样**——不是同类替代关系。
+
+| 维度 | MPJ | 本库（MPS） |
+|---|---|---|
+| **核心定位** | "多表 JOIN + 嵌套 DTO 映射" 专家 | "Stream API + 多方言写入" 专家 |
+| 设计风格 | 保留 SQL 形态派 / lambda Wrapper 链式 | 保留 SQL 形态派 / **Stream-first** 链式 |
+| 嵌套 DTO 自动归并（`selectCollection` / `selectAssociation`）| ✅ **MPJ 独有的护城河** —— 一次 JOIN 自动嵌套子集合 | ❌ 用 `stream().toGroupMap(...)` 应用层拼装 |
+| `selectFunc` 任意 SQL 函数模板（`%s` 字符串）| ✅ 灵活 | ⚠️ 偏方言层 cast / concat |
+| `FROM (SELECT ...)` 衍生表作主表 | ✅ | ❌ |
+| **Stream API**（toMap / groupingBy / toMapCount / toMapSum / toMapAvg / toMapMax / toMapMin）| ❌ 无 | ✅ **本库独有** —— SQL 下推聚合 |
+| **`selectSubSql` 标量子查询 lambda** | ⚠️ 需要手写 SQL 字符串 | ✅ 全 lambda 类型安全 |
+| **WriteMode 方言自适应**（UPSERT / IGNORE / REPLACE 在 MySQL / PG / DM 自动切 SQL 形态）| ⚠️ 仅沿用 MP 基础 INSERT/UPDATE | ✅ **本库独有** |
+| **达梦 DM 一等公民**（`MERGE INTO` 自动生成）| ⚠️ 靠 MP 通用，无 MERGE INTO 生成 | ✅ **本库独有** |
+| 行锁 `FOR UPDATE NOWAIT / WAIT n` | ❌ | ✅ |
+
+### 一句话区分
+
+- **MPJ**：场景是"几张表 JOIN 起来拼成一个 DTO 返回前端（含嵌套 List）"——把扁平结果集自动归并为对象图
+- **MPS**：场景是"用 JDK Stream 风格写 SQL + 跨 MySQL/PG/DM 写入"——Stream 终端操作和写入策略是抓手
+
+### 共存
+
+两个库**包名不冲突、wrapper 不互相污染**，技术上可以在同一项目里并存。MPJ 处理嵌套 DTO 一对多场景，MPS 处理 Stream 风格查询 + 多方言批量写入。
+
 ## 环境要求
 
 | 项 | 版本 |
