@@ -2,7 +2,7 @@
 
 GROUP BY 分组聚合。**简单聚合优先用 `stream().toMapCount/Sum/Avg/Max/Min`**（一行搞定），复杂场景（HAVING / 多 select 列 / 按函数分组 / 连表分组）才用 `group()` 链式或 `listGroup` 一行语法。
 
-## 最常用：分组计数 → toMapCount
+## 最常用：toMapCount {#to-map-count}
 
 ```sql
 SELECT role, COUNT(*) FROM user GROUP BY role
@@ -15,7 +15,7 @@ Map<String, Long> countByRole = userService.stream().toMapCount(User::getRole);
 
 更多收集器（`toMapSum / toMapAvg / toMapMax / toMapMin`）见 [Stream 收集器](/pages/core/stream/collectors)。
 
-## 多列分组聚合（带 DTO）
+## 多列分组聚合 {#multi-column}
 
 ```sql
 SELECT role AS status, COUNT(*) AS cnt
@@ -41,7 +41,7 @@ List<UserDTO> list = userService.listGroup(
     UserDTO.class);
 ```
 
-## 分组 + 排序 + 限制
+## 分组 + 排序 + 限制 {#order-limit}
 
 ```sql
 SELECT role AS status, COUNT(*) AS cnt
@@ -62,7 +62,7 @@ List<UserDTO> list = userService.stream()
     .collect(Collectors.toList());
 ```
 
-## HAVING 子句
+## HAVING 子句 {#having}
 
 ```sql
 SELECT role AS status, COUNT(*) AS cnt
@@ -81,7 +81,7 @@ userService.stream()
     .collect(Collectors.toList());
 ```
 
-## 按函数分组
+## 按函数分组 {#group-by-func}
 
 ```sql
 SELECT LEFT(username, 4) AS username, COUNT(*) AS cnt
@@ -99,7 +99,7 @@ userService.stream()
     .collect(Collectors.toList());
 ```
 
-## 关联 + 分组
+## 关联 + 分组 {#join-group}
 
 ```sql
 SELECT u.username AS username, COUNT(*) AS demandCount
@@ -128,7 +128,7 @@ List<UserDTO> list = userService.listGroupJoin(
     UserDTO.class);
 ```
 
-## 关联分组取单值
+## 关联分组取单值 {#join-group-values}
 
 ```sql
 SELECT COUNT(d.id) FROM user u LEFT JOIN demand d ON u.id = d.user_id GROUP BY u.id
@@ -159,7 +159,7 @@ List<Object> top3 = userService.stream()
     .collect(Collectors.toList());
 ```
 
-## 分组分页
+## 分组分页 {#page-group}
 
 ```sql
 SELECT role AS status, COUNT(*) AS cnt

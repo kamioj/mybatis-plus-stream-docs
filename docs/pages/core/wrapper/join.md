@@ -2,7 +2,7 @@
 
 多表关联的 lambda 写法，无需手写 SQL。本页以 Stream 形式为主，`userService.listJoin(...)` 作为对照。
 
-## 四种 JOIN 类型
+## 四种 JOIN 类型 {#join-types}
 
 ```sql
 SELECT * FROM user u
@@ -22,7 +22,7 @@ userService.stream()
     .collect(Collectors.toList());
 ```
 
-## 基础关联 + DTO
+## 基础关联 + DTO {#basic}
 
 ```sql
 SELECT u.username AS username, o.status AS orderStatus
@@ -50,7 +50,7 @@ List<UserOrderDTO> list = userService.listJoin(
     UserOrderDTO.class);
 ```
 
-## 关联 + 排序 + 限制（返回主实体）
+## 关联 + 排序 + 限制 {#order-limit}
 
 ```sql
 SELECT u.*
@@ -70,7 +70,7 @@ List<User> users = userService.stream()
     .collect(Collectors.toList());
 ```
 
-## 完整版：关联 + 条件 + 排序 + 限制 + 映射
+## 完整版 {#full}
 
 ```sql
 SELECT u.username AS username, d.service_type AS serviceType
@@ -93,7 +93,7 @@ List<UserOrderDTO> list = userService.stream()
     .collect(Collectors.toList());
 ```
 
-## 表别名（自关联或同表多次 JOIN）
+## 表别名 {#table-alias}
 
 ```sql
 SELECT u.username, d.service_type
@@ -112,7 +112,7 @@ userService.stream()
     .collect(Collectors.toList());
 ```
 
-## 自定义 ON 条件
+## 自定义 ON 条件 {#custom-on}
 
 ```sql
 LEFT JOIN demand d ON u.id = d.user_id AND d.status = 'active'
@@ -124,7 +124,7 @@ LEFT JOIN demand d ON u.id = d.user_id AND d.status = 'active'
     .eq(Demand::getStatus, "active")))
 ```
 
-## 子查询作为 JOIN 右表
+## 子查询作为 JOIN 右表 {#sub-query-join}
 
 ```sql
 SELECT u.username AS username
@@ -157,7 +157,7 @@ List<UserOrderDTO> list = userService.stream()
 
 更多子查询场景见 [子查询专章](/pages/core/wrapper/sub-query)。
 
-## 关联取单值
+## 关联取单值 {#values}
 
 ```sql
 SELECT COUNT(d.id) FROM user u LEFT JOIN demand d ON u.id = d.user_id WHERE d.id IS NOT NULL
@@ -178,7 +178,7 @@ List<Object> counts = userService.listJoinValues(
     func -> func.count(Demand::getId));
 ```
 
-## 关联更新
+## 关联更新 {#update}
 
 ```sql
 UPDATE user u
@@ -204,7 +204,7 @@ userService.updateJoin(
 
 详见 [update](/pages/core/service/update#updatejoin-——-关联更新)。
 
-## 关联分页
+## 关联分页 {#page}
 
 ```java
 // Stream 形式

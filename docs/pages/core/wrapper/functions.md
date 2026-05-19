@@ -10,7 +10,7 @@
 当前部分函数硬编码 MySQL 语法（`DATE_FORMAT / STR_TO_DATE / SUBSTRING_INDEX / DATE_ADD INTERVAL / CONVERT`），跨 PG / DM 会报错。计划在 4.2+ 方言化。详见 [多方言支持 — 函数名仍是 MySQL 风格](/pages/core/dialect/dialect#函数名仍是-mysql-风格)。
 :::
 
-## 聚合函数
+## 聚合函数 {#aggregate}
 
 ```java
 func -> func.count()                                    // COUNT(*)
@@ -28,7 +28,7 @@ func -> func.min(User::getCreditScore)                   // MIN(credit_score)
 func -> func.minDistinct(User::getCreditScore)           // MIN(DISTINCT credit_score)
 ```
 
-## GROUP_CONCAT
+## GROUP_CONCAT {#group-concat}
 
 ```java
 func -> func.groupConcat(User::getUsername)              // GROUP_CONCAT(username)
@@ -36,7 +36,7 @@ func -> func.groupConcat(User::getUsername, "|")         // GROUP_CONCAT(usernam
 func -> func.groupConcatDistinct(User::getRole)         // GROUP_CONCAT(DISTINCT role)
 ```
 
-## 条件计数
+## 条件计数 {#count-predicate}
 
 ```java
 // COUNT 满足条件的行
@@ -45,13 +45,13 @@ func -> func.countPredicate(pw -> pw.eq(User::getRole, "admin"))
 func -> func.countPredicateDistinct(pw -> pw.eq(User::getRole, "user"), User::getCreditScore)
 ```
 
-## 组内第一个
+## 组内第一个 {#group-first}
 
 ```java
 func -> func.groupFirst(User::getUsername, order -> order.orderAsc(User::getId))
 ```
 
-## 算术运算
+## 算术运算 {#arithmetic}
 
 ```java
 func -> func.add(User::getCreditScore, 10)       // credit_score + 10
@@ -62,7 +62,7 @@ func -> func.mod(User::getCreditScore, 30)       // credit_score % 30
 func -> func.abs(-42)                            // ABS(-42) = 42
 ```
 
-## 字符串函数
+## 字符串函数 {#string}
 
 ```java
 // CONCAT
@@ -96,7 +96,7 @@ func -> func.hexNumber(255)                       // HEX(255) = 'FF'
 func -> func.hexStr("Hello")                      // HEX('Hello')
 ```
 
-## 条件函数
+## 条件函数 {#conditional}
 
 ```java
 // IF
@@ -111,7 +111,7 @@ func -> func.ifnull(User::getOpenid, "N/A")
 func -> func.ifnullFunc(arg -> arg.column(User::getOpenid), arg -> arg.value("no_openid"))
 ```
 
-## 日期函数
+## 日期函数 {#date}
 
 ```java
 // NOW
@@ -137,7 +137,7 @@ func -> func.toDaysFunc(inner -> inner.now())            // TO_DAYS(NOW())
 func -> func.toSecondsFun(inner -> inner.now())          // TO_SECONDS(NOW())
 ```
 
-## 数学函数
+## 数学函数 {#math}
 
 ```java
 func -> func.sqrtFunc(arg -> arg.value(144))         // SQRT(144) = 12
@@ -148,14 +148,14 @@ func -> func.elt(2, "alpha", "beta", "gamma")   // ELT(2,'alpha','beta','gamma')
 func -> func.interval(23, 1, 5, 10, 20, 30)     // INTERVAL(23,1,5,10,20,30) = 4
 ```
 
-## 类型转换
+## 类型转换 {#cast}
 
 ```java
 func -> func.convertData(User::getCreditScore, "CHAR")
 // SQL: CONVERT(credit_score, CHAR)
 ```
 
-## 位运算
+## 位运算 {#bitwise}
 
 ```java
 func -> func.bAndFunc(arg -> arg.value(12), arg -> arg.value(10))        // 12 & 10 = 8

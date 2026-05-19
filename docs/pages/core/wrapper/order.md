@@ -2,7 +2,7 @@
 
 `ORDER BY` 子句构造器，用于 `list / listJoin / listGroup / stream` 等所有列表方法。
 
-## 升序
+## 升序 {#asc}
 
 ```sql
 SELECT * FROM user WHERE role = 'user' ORDER BY id ASC LIMIT 10
@@ -15,7 +15,7 @@ List<User> list = userService.list(
     10);
 ```
 
-## 降序
+## 降序 {#desc}
 
 ```sql
 SELECT * FROM user WHERE role = 'user' ORDER BY id DESC LIMIT 10
@@ -28,7 +28,7 @@ List<User> list = userService.list(
     10);
 ```
 
-## 多字段排序
+## 多字段排序 {#multi}
 
 ```sql
 ORDER BY role ASC, id DESC
@@ -38,7 +38,7 @@ ORDER BY role ASC, id DESC
 order -> order.orderAsc(User::getRole).orderDesc(User::getId)
 ```
 
-## 随机排序
+## 随机排序 {#random}
 
 ```sql
 ORDER BY RAND()
@@ -58,7 +58,7 @@ ORDER BY RAND(42)
 order -> order.orderByRandom(true, 42)
 ```
 
-## 按函数排序
+## 按函数排序 {#by-func}
 
 按字段长度：
 

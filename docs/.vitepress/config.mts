@@ -39,13 +39,112 @@ const sidebar = [
   {
     text: '条件构造器',
     items: [
-      { text: 'where', link: '/pages/core/wrapper/where' },
-      { text: 'select', link: '/pages/core/wrapper/select' },
-      { text: 'join', link: '/pages/core/wrapper/join' },
-      { text: 'group', link: '/pages/core/wrapper/group' },
-      { text: 'order', link: '/pages/core/wrapper/order' },
-      { text: '函数表达式', link: '/pages/core/wrapper/functions' },
-      { text: '子查询', link: '/pages/core/wrapper/sub-query' },
+      {
+        text: 'where',
+        link: '/pages/core/wrapper/where',
+        collapsed: true,
+        items: [
+          { text: '基础比较（eq/ne/gt...）', link: '/pages/core/wrapper/where#basic-compare' },
+          { text: '模糊匹配（like）', link: '/pages/core/wrapper/where#like' },
+          { text: '空值判断（isNull）', link: '/pages/core/wrapper/where#null' },
+          { text: '范围（in / between）', link: '/pages/core/wrapper/where#in-between' },
+          { text: '正则匹配', link: '/pages/core/wrapper/where#regexp' },
+          { text: '列与列比较', link: '/pages/core/wrapper/where#column-compare' },
+          { text: '逗号分隔值搜索', link: '/pages/core/wrapper/where#contain-any' },
+          { text: '永真条件', link: '/pages/core/wrapper/where#true' },
+          { text: '条件开关', link: '/pages/core/wrapper/where#condition-switch' },
+          { text: '与或非嵌套', link: '/pages/core/wrapper/where#and-or-not' },
+          { text: '子查询', link: '/pages/core/wrapper/where#sub-query' },
+          { text: '函数版 WHERE', link: '/pages/core/wrapper/where#func-where' }
+        ]
+      },
+      {
+        text: 'select',
+        link: '/pages/core/wrapper/select',
+        collapsed: true,
+        items: [
+          { text: '单字段简写', link: '/pages/core/wrapper/select#single-field' },
+          { text: '字段重命名映射', link: '/pages/core/wrapper/select#rename-map' },
+          { text: 'selectAll 全字段', link: '/pages/core/wrapper/select#select-all' },
+          { text: 'selectAuto 多表优先级 ⚠️', link: '/pages/core/wrapper/select#select-auto' },
+          { text: 'selectFunc 函数列', link: '/pages/core/wrapper/select#select-func' },
+          { text: 'selectSubSql 子查询列', link: '/pages/core/wrapper/select#select-sub-sql' },
+          { text: 'selectCase CASE 列', link: '/pages/core/wrapper/select#select-case' },
+          { text: 'JOIN 表别名', link: '/pages/core/wrapper/select#table-alias' }
+        ]
+      },
+      {
+        text: 'join',
+        link: '/pages/core/wrapper/join',
+        collapsed: true,
+        items: [
+          { text: '四种 JOIN 类型', link: '/pages/core/wrapper/join#join-types' },
+          { text: '基础关联 + DTO', link: '/pages/core/wrapper/join#basic' },
+          { text: '排序 + 限制', link: '/pages/core/wrapper/join#order-limit' },
+          { text: '表别名', link: '/pages/core/wrapper/join#table-alias' },
+          { text: '自定义 ON 条件', link: '/pages/core/wrapper/join#custom-on' },
+          { text: '子查询作为右表', link: '/pages/core/wrapper/join#sub-query-join' },
+          { text: '关联取值', link: '/pages/core/wrapper/join#values' },
+          { text: '关联更新', link: '/pages/core/wrapper/join#update' },
+          { text: '关联分页', link: '/pages/core/wrapper/join#page' }
+        ]
+      },
+      {
+        text: 'group',
+        link: '/pages/core/wrapper/group',
+        collapsed: true,
+        items: [
+          { text: 'toMapCount 最常用', link: '/pages/core/wrapper/group#to-map-count' },
+          { text: '多列分组聚合', link: '/pages/core/wrapper/group#multi-column' },
+          { text: '排序 + 限制', link: '/pages/core/wrapper/group#order-limit' },
+          { text: 'HAVING 子句', link: '/pages/core/wrapper/group#having' },
+          { text: '按函数分组', link: '/pages/core/wrapper/group#group-by-func' },
+          { text: '关联分组', link: '/pages/core/wrapper/group#join-group' },
+          { text: '分组分页', link: '/pages/core/wrapper/group#page-group' }
+        ]
+      },
+      {
+        text: 'order',
+        link: '/pages/core/wrapper/order',
+        collapsed: true,
+        items: [
+          { text: '升序 / 降序', link: '/pages/core/wrapper/order#asc' },
+          { text: '多字段排序', link: '/pages/core/wrapper/order#multi' },
+          { text: '随机排序', link: '/pages/core/wrapper/order#random' },
+          { text: '按函数排序', link: '/pages/core/wrapper/order#by-func' }
+        ]
+      },
+      {
+        text: '函数表达式',
+        link: '/pages/core/wrapper/functions',
+        collapsed: true,
+        items: [
+          { text: '聚合函数（COUNT/SUM/AVG/MAX/MIN）', link: '/pages/core/wrapper/functions#aggregate' },
+          { text: 'GROUP_CONCAT', link: '/pages/core/wrapper/functions#group-concat' },
+          { text: '条件计数', link: '/pages/core/wrapper/functions#count-predicate' },
+          { text: '组内第一个', link: '/pages/core/wrapper/functions#group-first' },
+          { text: '算术运算', link: '/pages/core/wrapper/functions#arithmetic' },
+          { text: '字符串函数', link: '/pages/core/wrapper/functions#string' },
+          { text: '条件函数（IF / IFNULL）', link: '/pages/core/wrapper/functions#conditional' },
+          { text: '日期函数', link: '/pages/core/wrapper/functions#date' },
+          { text: '数学函数', link: '/pages/core/wrapper/functions#math' },
+          { text: '类型转换（CAST）', link: '/pages/core/wrapper/functions#cast' },
+          { text: '位运算', link: '/pages/core/wrapper/functions#bitwise' }
+        ]
+      },
+      {
+        text: '子查询',
+        link: '/pages/core/wrapper/sub-query',
+        collapsed: true,
+        items: [
+          { text: 'WHERE IN', link: '/pages/core/wrapper/sub-query#in' },
+          { text: 'WHERE NOT IN', link: '/pages/core/wrapper/sub-query#not-in' },
+          { text: 'WHERE EXISTS', link: '/pages/core/wrapper/sub-query#exists' },
+          { text: 'WHERE NOT EXISTS', link: '/pages/core/wrapper/sub-query#not-exists' },
+          { text: 'SELECT 标量子查询', link: '/pages/core/wrapper/sub-query#scalar-select' },
+          { text: 'LEFT JOIN 衍生表', link: '/pages/core/wrapper/sub-query#join-derived' }
+        ]
+      },
       { text: '逻辑删除', link: '/pages/core/wrapper/soft-delete' }
     ]
   },

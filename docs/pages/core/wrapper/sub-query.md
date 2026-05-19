@@ -12,7 +12,7 @@
 | `LEFT JOIN (SELECT ...) AS t ON ...` | `.join(join -> join.leftJoin(sub -> ..., "t", on -> ...))` |
 | `RIGHT JOIN (SELECT ...) AS t ON ...` | `.join(join -> join.rightJoin(sub -> ..., "t", on -> ...))` |
 
-## WHERE col IN (SELECT ...)
+## WHERE col IN (SELECT ...) {#in}
 
 ```sql
 SELECT * FROM user
@@ -35,7 +35,7 @@ List<User> users = userService.list(where -> where.inSubSql(User::getId,
               .where(subWhere -> subWhere.eq(Demand::getStatus, "completed"))));
 ```
 
-## WHERE col NOT IN (SELECT ...)
+## WHERE col NOT IN (SELECT ...) {#not-in}
 
 ```sql
 SELECT * FROM user
@@ -50,7 +50,7 @@ userService.stream()
     .collect(Collectors.toList());
 ```
 
-## WHERE EXISTS
+## WHERE EXISTS {#exists}
 
 `EXISTS` 用 **`NonValueSubSqlLambdaQueryWrapper`**——子查询里**不需要 select**（框架自动 `SELECT 1`，减少 IO）。
 
@@ -75,7 +75,7 @@ userService.stream()
 `eqColumn(Demand::getUserId, User::getId)` 表示 **`demand.user_id = user.id`**——子查询关联回外层的关键 API。
 :::
 
-## WHERE NOT EXISTS
+## WHERE NOT EXISTS {#not-exists}
 
 ```sql
 SELECT * FROM user
@@ -90,7 +90,7 @@ List<User> idleUsers = userService.stream()
     .collect(Collectors.toList());
 ```
 
-## SELECT 标量子查询
+## SELECT 标量子查询 {#scalar-select}
 
 `selectSubSql` 把子查询作为**结果列**塞进 SELECT，并映射到 DTO 字段。
 
@@ -124,7 +124,7 @@ List<UserWithCountDTO> list = userService.stream()
 对外层每行执行一次子查询——**外层结果集很大时会很慢**。如果可以，改用 LEFT JOIN + GROUP BY 写法。
 :::
 
-## LEFT JOIN 衍生表
+## LEFT JOIN 衍生表 {#join-derived}
 
 子查询作为 JOIN 右表，常用于"每个 user 的订单数"这种聚合后再 JOIN 的场景。
 
