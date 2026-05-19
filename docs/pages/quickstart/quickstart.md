@@ -124,11 +124,11 @@ FROM user WHERE role = 'user' LIMIT 5
 class UserDTO { private String username; private Integer score; }
 
 List<UserDTO> list = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
-    .limit(5)
     .map(select -> select.select(User::getUsername,    UserDTO::getUsername)
                .select(User::getCreditScore, UserDTO::getScore),
          UserDTO.class)
+    .filter(where -> where.eq(User::getRole, "user"))
+    .limit(5)
     .collect(Collectors.toList());
 ```
 

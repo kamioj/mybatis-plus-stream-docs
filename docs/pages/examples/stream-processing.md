@@ -30,9 +30,9 @@ Map<String, List<User>> byRole = userService.stream()
 
 // 提取用户名列表
 List<String> names = userService.stream()
+    .mapToColumn(User::getUsername)
     .filter(where -> where.eq(User::getRole, "user"))
     .sorted(order -> order.orderAsc(User::getUsername))
-    .mapToColumn(User::getUsername)
     .collect(Collectors.toList());
 
 // ID → User 映射表
@@ -74,13 +74,13 @@ public class SimpleUserDTO {
 }
 
 List<SimpleUserDTO> dtos = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
-    .sorted(order -> order.orderDesc(User::getCreditScore))
-    .limit(10)
     .map(select -> select
             .select(User::getUsername, SimpleUserDTO::getUsername)
             .select(User::getCreditScore, SimpleUserDTO::getScore),
          SimpleUserDTO.class)
+    .filter(where -> where.eq(User::getRole, "user"))
+    .sorted(order -> order.orderDesc(User::getCreditScore))
+    .limit(10)
     .collect(Collectors.toList());
 ```
 

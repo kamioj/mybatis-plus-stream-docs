@@ -88,10 +88,10 @@ class UserDTO {
 
 // Stream 形式
 List<UserDTO> list = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
     .map(select -> select.select(User::getUsername,    UserDTO::getUsername)
                .select(User::getCreditScore, UserDTO::getScore),
          UserDTO.class)
+    .filter(where -> where.eq(User::getRole, "user"))
     .collect(Collectors.toList());
 
 // 一行语法
@@ -114,12 +114,12 @@ LIMIT 3
 
 ```java
 List<UserDTO> list = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
-    .sorted(order -> order.orderAsc(User::getId))
-    .limit(3)
     .map(select -> select.select(User::getUsername,    UserDTO::getUsername)
                .select(User::getCreditScore, UserDTO::getScore),
          UserDTO.class)
+    .filter(where -> where.eq(User::getRole, "user"))
+    .sorted(order -> order.orderAsc(User::getId))
+    .limit(3)
     .collect(Collectors.toList());
 ```
 

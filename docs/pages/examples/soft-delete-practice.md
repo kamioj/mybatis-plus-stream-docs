@@ -48,14 +48,14 @@ articleService.remove(where -> where.eq(Article::getId, 1L));
 ```java
 // withDeleted() 跳过逻辑删除过滤
 List<Article> all = articleService.stream()
-    .withDeleted()
     .sorted(order -> order.orderDesc(Article::getId))
+    .withDeleted()
     .collect(Collectors.toList());
 
 // 只查已删除的
 List<Article> deleted = articleService.stream()
-    .withDeleted()
     .filter(where -> where.eq(Article::getDeleted, 1))
+    .withDeleted()
     .collect(Collectors.toList());
 ```
 
@@ -66,11 +66,11 @@ List<Article> deleted = articleService.stream()
 ```java
 // 恢复指定文章
 articleService.executableStream()
+    .set(set -> set.set(Article::getDeleted, 0))
     .filter(where -> where
         .withDeleted()
         .eq(Article::getId, articleId)
         .eq(Article::getDeleted, 1))
-    .set(set -> set.set(Article::getDeleted, 0))
     .executeUpdate();
 ```
 
@@ -87,8 +87,8 @@ long totalCount = articleService.stream()
 
 // 已删除文章数
 long deletedCount = articleService.stream()
-    .withDeleted()
     .filter(where -> where.eq(Article::getDeleted, 1))
+    .withDeleted()
     .count();
 ```
 
@@ -101,19 +101,19 @@ public IPage<Article> trashList(
     @RequestParam(defaultValue = "10") int size) {
 
     return articleService.stream()
-        .withDeleted()
         .filter(where -> where.eq(Article::getDeleted, 1))
         .sorted(order -> order.orderDesc(Article::getId))
+        .withDeleted()
         .page(new Page<>(page, size));
 }
 
 @PostMapping("/trash/{id}/restore")
 public void restore(@PathVariable Long id) {
     articleService.executableStream()
+        .set(set -> set.set(Article::getDeleted, 0))
         .filter(where -> where
             .withDeleted()
             .eq(Article::getId, id))
-        .set(set -> set.set(Article::getDeleted, 0))
         .executeUpdate();
 }
 

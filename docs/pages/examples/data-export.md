@@ -105,10 +105,10 @@ public void exportLarge(HttpServletResponse response) throws IOException {
 ```java
 // 提取所有活跃用户的 ID
 List<Long> activeIds = userService.stream()
+    .mapToColumn(User::getId)
     .filter(where -> where
         .eq(User::getRole, "user")
         .ge(User::getCreditScore, 100))
-    .mapToColumn(User::getId)
     .collect(Collectors.toList());
 
 // 提取所有用户名（去重）

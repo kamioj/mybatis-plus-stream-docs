@@ -88,13 +88,13 @@ LIMIT 1
 @Data
 class UserDTO { private String username; private Integer score; }
 
-// Stream 形式
+// Stream 形式（lambda 调用顺序 = SQL 子句顺序）
 UserDTO dto = userService.stream()
-    .filter(where -> where.eq(User::getUsername, "user1"))
-    .map(select -> select.select(User::getUsername,    UserDTO::getUsername)
-               .select(User::getCreditScore, UserDTO::getScore),
+    .map(select -> select.select(User::getUsername,    UserDTO::getUsername)   // SELECT
+                         .select(User::getCreditScore, UserDTO::getScore),
          UserDTO.class)
-    .findFirst()
+    .filter(where -> where.eq(User::getUsername, "user1"))                     // WHERE
+    .findFirst()                                                                // LIMIT 1
     .orElse(null);
 
 // 一行语法
@@ -104,6 +104,17 @@ UserDTO dto = userService.get(
                     .select(User::getCreditScore, UserDTO::getScore),
     UserDTO.class);
 ```
+
+::: tip 调用顺序 = SQL 子句顺序
+本库 stream 是 SQL 生成器，**调用顺序对最终 SQL 无影响**（不像 JDK Stream 是数据流 pipeline）。为了让 lambda 读起来像 SQL，本库文档约定 lambda 顺序按 SQL 标准书写顺序：
+
+```
+.map(select  → )  → .join(...)  → .filter(where → )  → .group(...)  → .sorted(order → )  → .limit(n) / .findFirst()
+   SELECT          FROM JOIN         WHERE              GROUP BY         ORDER BY            LIMIT
+```
+
+你写的顺序 = 生成的 SQL 顺序 = 读代码的视觉顺序，三者完全对齐。
+:::
 
 ::: tip 为什么用 DTO 映射
 - **少传字段** —— 表有 30 列只用 2 列，避免拉回多余数据

@@ -26,10 +26,10 @@ GROUP BY role
 ```java
 // Stream 形式
 List<UserDTO> list = userService.stream()
-    .group(group -> group.groupBy(User::getRole))
     .map(select -> select.select(User::getRole, UserDTO::getStatus)
                .selectFunc(inner -> inner.count(), UserDTO::getCount),
          UserDTO.class)
+    .group(group -> group.groupBy(User::getRole))
     .collect(Collectors.toList());
 
 // 一行语法
@@ -53,12 +53,12 @@ LIMIT 1
 
 ```java
 List<UserDTO> list = userService.stream()
-    .group(group -> group.groupBy(User::getRole))
-    .sorted(order -> order.orderDesc(User::getRole))
-    .limit(1)
     .map(select -> select.select(User::getRole, UserDTO::getStatus)
                .selectFunc(inner -> inner.count(), UserDTO::getCount),
          UserDTO.class)
+    .group(group -> group.groupBy(User::getRole))
+    .sorted(order -> order.orderDesc(User::getRole))
+    .limit(1)
     .collect(Collectors.toList());
 ```
 
@@ -73,11 +73,11 @@ HAVING COUNT(*) > 1
 
 ```java
 userService.stream()
-    .group(group -> group.groupBy(User::getRole)
-                 .having(h -> h.gtFunc(inner -> inner.count(), arg -> arg.value(1))))
     .map(select -> select.select(User::getRole, UserDTO::getStatus)
                .selectFunc(inner -> inner.count(), UserDTO::getCount),
          UserDTO.class)
+    .group(group -> group.groupBy(User::getRole)
+                 .having(h -> h.gtFunc(inner -> inner.count(), arg -> arg.value(1))))
     .collect(Collectors.toList());
 ```
 
@@ -91,11 +91,11 @@ GROUP BY LEFT(username, 4)
 
 ```java
 userService.stream()
-    .group(group -> group.groupByFunc(inner -> inner.leftFunc(inner -> inner.column(User::getUsername), 4)))
     .map(select -> select.selectFunc(inner -> inner.leftFunc(arg -> arg.column(User::getUsername), 4),
                            UserDTO::getUsername)
                .selectFunc(inner -> inner.count(), UserDTO::getCount),
          UserDTO.class)
+    .group(group -> group.groupByFunc(inner -> inner.leftFunc(inner -> inner.column(User::getUsername), 4)))
     .collect(Collectors.toList());
 ```
 
@@ -111,11 +111,11 @@ GROUP BY u.username
 ```java
 // Stream 形式
 userService.stream()
-    .join(join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId))
-    .group(group -> group.groupBy(User::getUsername))
     .map(select -> select.select(User::getUsername, UserDTO::getUsername)
                .selectFunc(inner -> inner.count(), UserDTO::getDemandCount),
          UserDTO.class)
+    .join(join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId))
+    .group(group -> group.groupBy(User::getUsername))
     .collect(Collectors.toList());
 
 // 一行语法
@@ -136,9 +136,9 @@ SELECT COUNT(d.id) FROM user u LEFT JOIN demand d ON u.id = d.user_id GROUP BY u
 
 ```java
 List<Object> counts = userService.stream()
+    .mapToValue(func -> func.count(Demand::getId))
     .join(join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId))
     .group(group -> group.groupBy(User::getId))
-    .mapToValue(func -> func.count(Demand::getId))
     .collect(Collectors.toList());
 ```
 
@@ -151,11 +151,11 @@ GROUP BY u.id ORDER BY COUNT(d.id) DESC LIMIT 3
 
 ```java
 List<Object> top3 = userService.stream()
+    .mapToValue(func -> func.count(Demand::getId))
     .join(join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId))
     .group(group -> group.groupBy(User::getId))
     .sorted(order -> order.orderFunc(inner -> inner.count(Demand::getId), false))
     .limit(3)
-    .mapToValue(func -> func.count(Demand::getId))
     .collect(Collectors.toList());
 ```
 
@@ -169,10 +169,10 @@ LIMIT 10 OFFSET 0
 
 ```java
 IPage<UserDTO> page = userService.stream()
-    .group(group -> group.groupBy(User::getRole))
     .map(select -> select.select(User::getRole, UserDTO::getStatus)
                .selectFunc(inner -> inner.count(), UserDTO::getCount),
          UserDTO.class)
+    .group(group -> group.groupBy(User::getRole))
     .page(new Page<>(1, 10));
 ```
 

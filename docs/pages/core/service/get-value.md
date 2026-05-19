@@ -13,8 +13,8 @@ SELECT nickname FROM user WHERE username = 'user1' LIMIT 1
 ```java
 // Stream 形式
 String nick = userService.stream()
-    .filter(where -> where.eq(User::getUsername, "user1"))
     .mapToColumn(User::getNickname)
+    .filter(where -> where.eq(User::getUsername, "user1"))
     .findFirst()
     .orElse(null);
 
@@ -44,8 +44,8 @@ SELECT CHAR_LENGTH(username) FROM user WHERE username = 'user1' LIMIT 1
 ```java
 // Stream 形式
 Object len = userService.stream()
-    .filter(where -> where.eq(User::getUsername, "user1"))
     .mapToValue(func -> func.charLengthFunc(arg -> arg.column(User::getUsername)))
+    .filter(where -> where.eq(User::getUsername, "user1"))
     .findFirst()
     .orElse(null);
 
@@ -78,8 +78,8 @@ SELECT username FROM user WHERE role = 'user'
 ```java
 // Stream 形式
 List<String> names = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
     .mapToColumn(User::getUsername)
+    .filter(where -> where.eq(User::getRole, "user"))
     .collect(Collectors.toList());
 
 // 一行语法
@@ -104,9 +104,9 @@ SELECT username FROM user ORDER BY id DESC LIMIT 3
 ```java
 // Stream 形式
 List<String> top3 = userService.stream()
+    .mapToColumn(User::getUsername)
     .sorted(order -> order.orderDesc(User::getId))
     .limit(3)
-    .mapToColumn(User::getUsername)
     .collect(Collectors.toList());
 
 // 一行语法
@@ -126,8 +126,8 @@ SELECT CHAR_LENGTH(username) FROM user WHERE role = 'user'
 ```java
 // Stream 形式
 List<Object> lengths = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
     .mapToValue(func -> func.charLengthFunc(arg -> arg.column(User::getUsername)))
+    .filter(where -> where.eq(User::getRole, "user"))
     .collect(Collectors.toList());
 ```
 

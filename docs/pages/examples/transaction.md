@@ -81,10 +81,10 @@ public User register(String username, String password) {
 public void resetInactiveUsers() {
     // 查出所有不活跃用户
     List<Long> inactiveIds = userService.stream()
+        .mapToColumn(User::getId)
         .filter(where -> where
             .eq(User::getRole, "user")
             .lt(User::getCreditScore, 10))
-        .mapToColumn(User::getId)
         .collect(Collectors.toList());
 
     if (inactiveIds.isEmpty()) return;

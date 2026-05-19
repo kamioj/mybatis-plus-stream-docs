@@ -74,8 +74,8 @@ SELECT COUNT(*) FROM test_soft_delete WHERE status = 'active'
 
 ```java
 long allCount = service.stream()
-    .withDeleted()
     .filter(where -> where.eq(Entity::getStatus, "active"))
+    .withDeleted()
     .count();
 ```
 

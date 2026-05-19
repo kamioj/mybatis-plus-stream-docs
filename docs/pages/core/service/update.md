@@ -11,8 +11,8 @@ UPDATE user SET credit_score = 200 WHERE username = 'user1'
 ```java
 // Stream 形式（executableStream）
 int updated = userService.executableStream()
-    .filter(where -> where.eq(User::getUsername, "user1"))
     .set(set -> set.set(User::getCreditScore, 200))
+    .filter(where -> where.eq(User::getUsername, "user1"))
     .executeUpdate();
 
 // 一行语法
@@ -30,8 +30,8 @@ UPDATE user SET credit_score = credit_score + 5 WHERE username = 'user1'
 ```java
 // Stream 形式
 userService.executableStream()
-    .filter(where -> where.eq(User::getUsername, "user1"))
     .set(set -> set.setFunc(User::getCreditScore, inner -> inner.add(User::getCreditScore, 5)))
+    .filter(where -> where.eq(User::getUsername, "user1"))
     .executeUpdate();
 
 // 一行语法
@@ -48,8 +48,8 @@ UPDATE user SET credit_score = credit_score * 2 WHERE username = 'user1'
 
 ```java
 userService.executableStream()
-    .filter(where -> where.eq(User::getUsername, "user1"))
     .set(set -> set.setFunc(User::getCreditScore, inner -> inner.multiply(User::getCreditScore, 2)))
+    .filter(where -> where.eq(User::getUsername, "user1"))
     .executeUpdate();
 ```
 
@@ -88,9 +88,9 @@ WHERE u.username = 'user1'
 ```java
 // Stream 形式
 userService.executableStream()
+    .set(set -> set.set(User::getCreditScore, 200))
     .join(join -> join.innerJoin(Demand.class, User::getId, Demand::getUserId))
     .filter(where -> where.eq(User::getUsername, "user1"))
-    .set(set -> set.set(User::getCreditScore, 200))
     .executeUpdate();
 
 // 一行语法
@@ -111,8 +111,8 @@ int updated = userService.updateJoin(
 
 | 一行语法 | Stream 形式 |
 |---|---|
-| `update(Set, Where)` | `executableStream().filter().set().executeUpdate()` |
-| `updateJoin(Join, Set, Where)` | `executableStream().join().filter().set().executeUpdate()` |
+| `update(Set, Where)` | `executableStream().set().filter().executeUpdate()` |
+| `updateJoin(Join, Set, Where)` | `executableStream().set().join().filter().executeUpdate()` |
 
 ## 相关
 

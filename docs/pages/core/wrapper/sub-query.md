@@ -109,7 +109,6 @@ class UserWithCountDTO {
 }
 
 List<UserWithCountDTO> list = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
     .map(select -> select.select(User::getUsername, UserWithCountDTO::getUsername)
                .selectSubSql(
                    sub -> sub.from(Demand.class)
@@ -117,6 +116,7 @@ List<UserWithCountDTO> list = userService.stream()
                              .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId)),
                    UserWithCountDTO::getDemandCount),
          UserWithCountDTO.class)
+    .filter(where -> where.eq(User::getRole, "user"))
     .collect(Collectors.toList());
 ```
 

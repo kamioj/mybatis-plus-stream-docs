@@ -20,13 +20,13 @@ LIMIT 10
 ```java
 // Stream 形式（推荐）
 List<UserDTO> top = userService.stream()
+    .map(select -> select.select(User::getUsername, UserDTO::getUsername)
+               .selectFunc(inner -> inner.count(), UserDTO::getCnt),
+         UserDTO.class)
     .filter(where -> where.eq(User::getRole, "user"))
     .group(group -> group.groupBy(User::getUsername))
     .sorted(order -> order.orderDesc(UserDTO::getCnt))
     .limit(10)
-    .map(select -> select.select(User::getUsername, UserDTO::getUsername)
-               .selectFunc(inner -> inner.count(), UserDTO::getCnt),
-         UserDTO.class)
     .collect(Collectors.toList());
 ```
 

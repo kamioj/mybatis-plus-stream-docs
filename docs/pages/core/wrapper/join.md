@@ -34,11 +34,11 @@ WHERE o.id IS NOT NULL
 ```java
 // Stream 形式
 List<UserOrderDTO> list = userService.stream()
-    .join(join -> join.leftJoin(Order.class, User::getId, Order::getUserId))
-    .filter(where -> where.isNotNull(Order::getId))
     .map(select -> select.select(User::getUsername, UserOrderDTO::getUsername)
                .select(Order::getStatus, UserOrderDTO::getOrderStatus),
          UserOrderDTO.class)
+    .join(join -> join.leftJoin(Order.class, User::getId, Order::getUserId))
+    .filter(where -> where.isNotNull(Order::getId))
     .collect(Collectors.toList());
 
 // 一行语法
@@ -83,13 +83,13 @@ LIMIT 3
 
 ```java
 List<UserOrderDTO> list = userService.stream()
+    .map(select -> select.select(User::getUsername, UserOrderDTO::getUsername)
+               .select(Demand::getServiceType, UserOrderDTO::getServiceType),
+         UserOrderDTO.class)
     .join(join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId))
     .filter(where -> where.isNotNull(Demand::getId))
     .sorted(order -> order.orderAsc(User::getUsername))
     .limit(3)
-    .map(select -> select.select(User::getUsername, UserOrderDTO::getUsername)
-               .select(Demand::getServiceType, UserOrderDTO::getServiceType),
-         UserOrderDTO.class)
     .collect(Collectors.toList());
 ```
 
@@ -104,11 +104,11 @@ WHERE u.role = 'user'
 
 ```java
 userService.stream()
-    .join(join -> join.leftJoin(Demand.class, "d", User::getId, Demand::getUserId))
-    .filter(where -> where.eq(User::getRole, "user"))
     .map(select -> select.select(User::getUsername, UserOrderDTO::getUsername)
                .select(Demand::getServiceType, "d", UserOrderDTO::getServiceType),
          UserOrderDTO.class)
+    .join(join -> join.leftJoin(Demand.class, "d", User::getId, Demand::getUserId))
+    .filter(where -> where.eq(User::getRole, "user"))
     .collect(Collectors.toList());
 ```
 
@@ -141,6 +141,7 @@ LIMIT 3
 
 ```java
 List<UserOrderDTO> list = userService.stream()
+    .map(select -> select.select(User::getUsername, UserOrderDTO::getUsername), UserOrderDTO.class)
     .join(join -> join.leftJoin(
         sub -> sub.from(Demand.class)
                   .select(select -> select.select(Demand::getUserId)
@@ -151,7 +152,6 @@ List<UserOrderDTO> list = userService.stream()
     .filter(where -> where.eq(User::getRole, "user"))
     .sorted(order -> order.orderAsc(User::getId))
     .limit(3)
-    .map(select -> select.select(User::getUsername, UserOrderDTO::getUsername), UserOrderDTO.class)
     .collect(Collectors.toList());
 ```
 
@@ -166,9 +166,9 @@ SELECT COUNT(d.id) FROM user u LEFT JOIN demand d ON u.id = d.user_id WHERE d.id
 ```java
 // Stream 形式
 List<Object> counts = userService.stream()
+    .mapToValue(func -> func.count(Demand::getId))
     .join(join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId))
     .filter(where -> where.isNotNull(Demand::getId))
-    .mapToValue(func -> func.count(Demand::getId))
     .collect(Collectors.toList());
 
 // 一行语法
@@ -191,8 +191,8 @@ WHERE u.username = 'user1'
 // Stream 形式
 userService.executableStream()
     .join(join -> join.innerJoin(Demand.class, User::getId, Demand::getUserId))
-    .filter(where -> where.eq(User::getUsername, "user1"))
     .set(set -> set.set(User::getCreditScore, 200))
+    .filter(where -> where.eq(User::getUsername, "user1"))
     .executeUpdate();
 
 // 一行语法
@@ -209,11 +209,11 @@ userService.updateJoin(
 ```java
 // Stream 形式
 IPage<UserOrderDTO> page = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
-    .join(join -> join.leftJoin(Order.class, User::getId, Order::getUserId))
     .map(select -> select.select(User::getUsername, UserOrderDTO::getUsername)
                .select(Order::getStatus, UserOrderDTO::getOrderStatus),
          UserOrderDTO.class)
+    .join(join -> join.leftJoin(Order.class, User::getId, Order::getUserId))
+    .filter(where -> where.eq(User::getRole, "user"))
     .page(new Page<>(1, 10));
 
 // 一行语法 — 见 page.md

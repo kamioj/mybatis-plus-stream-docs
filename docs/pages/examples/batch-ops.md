@@ -98,10 +98,10 @@ int updated = userService.update(
 ```java
 // 流式条件更新
 userService.executableStream()
+    .set(set -> set.set(User::getCreditScore, 0))
     .filter(where -> where
         .eq(User::getRole, "user")
         .lt(User::getCreditScore, 0))
-    .set(set -> set.set(User::getCreditScore, 0))
     .executeUpdate();
 
 // 流式条件删除

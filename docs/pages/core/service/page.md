@@ -45,11 +45,11 @@ LIMIT 3 OFFSET 0
 ```java
 // Stream 形式
 IPage<UserDTO> page = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
-    .sorted(order -> order.orderAsc(User::getId))
     .map(select -> select.select(User::getUsername, UserDTO::getUsername)
                .select(User::getId,       UserDTO::getId),
          UserDTO.class)
+    .filter(where -> where.eq(User::getRole, "user"))
+    .sorted(order -> order.orderAsc(User::getId))
     .page(new Page<>(1, 3));
 
 // 一行语法
@@ -73,11 +73,11 @@ LIMIT 10 OFFSET 0
 ```java
 // Stream 形式
 IPage<UserDTO> page = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
-    .join(join -> join.leftJoin(Order.class, User::getId, Order::getUserId))
     .map(select -> select.select(User::getUsername, UserDTO::getUsername)
                .select(Order::getStatus, UserDTO::getOrderStatus),
          UserDTO.class)
+    .join(join -> join.leftJoin(Order.class, User::getId, Order::getUserId))
+    .filter(where -> where.eq(User::getRole, "user"))
     .page(new Page<>(1, 10));
 
 // 一行语法
@@ -101,10 +101,10 @@ LIMIT 10 OFFSET 0
 ```java
 // Stream 形式
 IPage<UserDTO> page = userService.stream()
-    .group(group -> group.groupBy(User::getRole))
     .map(select -> select.select(User::getRole, UserDTO::getStatus)
                .selectFunc(inner -> inner.count(), UserDTO::getCount),
          UserDTO.class)
+    .group(group -> group.groupBy(User::getRole))
     .page(new Page<>(1, 10));
 
 // 一行语法

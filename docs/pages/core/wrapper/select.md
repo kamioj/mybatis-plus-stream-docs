@@ -99,13 +99,13 @@ class UserOrderDTO {
 }
 
 userService.stream()
-    .join(join -> join.leftJoin(Order.class, User::getId, Order::getUserId))
     .map(select -> {
         select.selectAuto(UserOrderDTO.class, User.class, Order.class);
         //     ^ DTO 类      ^ 优先级：User 先，Order 次
         //     id 和 username 在 User 找到，orderNo 在 Order 找到
         return select;
     }, UserOrderDTO.class)
+    .join(join -> join.leftJoin(Order.class, User::getId, Order::getUserId))
     .collect(Collectors.toList());
 ```
 
@@ -249,10 +249,10 @@ FROM user u LEFT JOIN demand d ON u.id = d.user_id
 
 ```java
 userService.stream()
-    .join(join -> join.leftJoin(Demand.class, "d", User::getId, Demand::getUserId))
     .map(select -> select.select(User::getUsername, UserDTO::getUsername)
                          .select(Demand::getServiceType, "d", UserDTO::getServiceType),
          UserDTO.class)
+    .join(join -> join.leftJoin(Demand.class, "d", User::getId, Demand::getUserId))
     .collect(Collectors.toList());
 ```
 
@@ -288,9 +288,6 @@ LIMIT 10
 
 ```java
 List<UserDTO> list = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
-    .sorted(order -> order.orderAsc(User::getId))
-    .limit(10)
     .map(select -> select
         // 1) 字段重命名映射
         .select(User::getUsername, UserDTO::getUsername)
@@ -311,6 +308,9 @@ List<UserDTO> list = userService.stream()
                       .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId)),
             UserDTO::getDemandCount),
         UserDTO.class)
+    .filter(where -> where.eq(User::getRole, "user"))
+    .sorted(order -> order.orderAsc(User::getId))
+    .limit(10)
     .collect(Collectors.toList());
 ```
 
