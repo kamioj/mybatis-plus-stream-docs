@@ -34,10 +34,10 @@ List<User> users = userService.list(where -> where
 
 ```java
 List<User> users = userService.list(where -> where
-    .existSubSql(
-        sub -> sub.from(Demand.class)
-            .where(sw -> sw.eqColumn(Demand::getUserId, User::getId)
-                          .eq(Demand::getStatus, "待接单"))));
+    .exists(sub -> sub
+        .from(Demand.class)
+        .where(sw -> sw.eqColumn(Demand::getUserId, User::getId)
+                      .eq(Demand::getStatus, "待接单"))));
 ```
 
 生成 SQL：
@@ -71,23 +71,27 @@ List<UserWithDemandCountDTO> list = userService.list(
     UserWithDemandCountDTO.class);
 ```
 
-## WHERE 子查询比较
+## WHERE 标量比较子查询
 
-积分高于平均值的用户：
+::: warning 当前未支持
+`WHERE col = (SELECT ...)` / `> (SELECT ...)` 等标量比较子查询本库**暂未提供 lambda 入口**（如 `eqSubSql` / `gtSubSql`）。需要这种形态时，临时方案：
+
+1. 走 mapper.xml 写原生 SQL
+2. 或转为两步：先 `getValue` 查出聚合标量，再用普通 `gt(col, value)` 比较
 
 ```java
-List<User> aboveAvg = userService.list(where -> where
-    .gtSubSql(User::getCreditScore,
-        sub -> sub.from(User.class)
-            .select(select -> select.selectFunc(
-                func -> func.avg(User::getCreditScore), SingleValue::getValue))));
+// 例：积分高于平均值的用户（两步法）
+Double avg = userService.getValue(
+    w -> {},
+    s -> s.selectFunc(f -> f.avg(User::getCreditScore), SingleValue::getValue),
+    Double.class);
+
+List<User> aboveAvg = userService.list(
+    w -> w.gt(User::getCreditScore, avg.intValue()));
 ```
 
-生成 SQL：
-```sql
-SELECT * FROM user
-WHERE credit_score > (SELECT AVG(credit_score) FROM user)
-```
+完整能力对照参见 [子查询专章 — 当前不支持的形态](/pages/core/wrapper/sub-query#当前不支持的形态)。
+:::
 
 ## CASE WHEN 展示
 

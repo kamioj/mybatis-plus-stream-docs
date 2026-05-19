@@ -1,6 +1,10 @@
-# 批量写入策略
+# 批量写入策略（速查）
 
 除 `saveBatchWithoutId` 外，框架还提供了三种冲突处理策略。
+
+::: tip 深度内容
+四种 WriteMode 的**完整能力、三方言（MySQL/PG/DM）SQL 形态对照、duplicateSet 全部写法、性能与批大小建议** 请看 [WriteMode 与方言](/pages/core/service/write-mode)。本页只列基础速查。
+:::
 
 ## saveDuplicate
 

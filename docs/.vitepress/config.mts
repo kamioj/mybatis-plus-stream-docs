@@ -30,7 +30,8 @@ const sidebar = [
           { text: 'save', link: '/pages/core/service/save' },
           { text: 'update', link: '/pages/core/service/update' },
           { text: 'remove', link: '/pages/core/service/remove' },
-          { text: '批量策略', link: '/pages/core/service/batch' }
+          { text: '批量策略（速查）', link: '/pages/core/service/batch' },
+          { text: 'WriteMode 与方言', link: '/pages/core/service/write-mode' }
         ]
       }
     ]
@@ -44,6 +45,7 @@ const sidebar = [
       { text: 'group', link: '/pages/core/wrapper/group' },
       { text: 'order', link: '/pages/core/wrapper/order' },
       { text: '函数表达式', link: '/pages/core/wrapper/functions' },
+      { text: '子查询', link: '/pages/core/wrapper/sub-query' },
       { text: '逻辑删除', link: '/pages/core/wrapper/soft-delete' }
     ]
   },
@@ -51,7 +53,14 @@ const sidebar = [
     text: 'Stream API',
     items: [
       { text: 'stream()', link: '/pages/core/stream/stream' },
-      { text: 'executableStream()', link: '/pages/core/stream/executable' }
+      { text: 'executableStream()', link: '/pages/core/stream/executable' },
+      { text: '收集器（toMap / groupingBy / toMapCount...）', link: '/pages/core/stream/collectors' }
+    ]
+  },
+  {
+    text: '多方言支持',
+    items: [
+      { text: 'PostgreSQL / 达梦 DM', link: '/pages/core/dialect/dialect' }
     ]
   },
   {
