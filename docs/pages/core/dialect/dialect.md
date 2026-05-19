@@ -141,22 +141,6 @@ userService.list(
     LockMode.FOR_UPDATE);
 ```
 
-### PG 实测覆盖
-
-主库提供完整的 testcontainers 集成测试，覆盖以下场景（4.1.1.0 起）：
-
-| 测试方法 | 验证 |
-|---|---|
-| `saveBatch_and_list` | 批量插入 + 条件查询 |
-| `stream_filter_collect` | Stream 过滤 + `toSet` |
-| `toMap_pushes_select_two_columns` | `toMap` SQL 下推两列 |
-| `toMapCount_pushes_group_by_to_sql` | `toMapCount` SQL 下推 GROUP BY |
-| `saveDuplicate_pg_uses_on_conflict` | UPSERT 走 `ON CONFLICT DO UPDATE` |
-| `saveIgnore_pg_uses_on_conflict_do_nothing` | IGNORE 走 `ON CONFLICT DO NOTHING` |
-| `saveReplace_pg_uses_on_conflict_overwrite_all` | REPLACE 走 `ON CONFLICT DO UPDATE 全列=EXCLUDED.全列` |
-
-测试位置 `src/test/java/.../it/PostgreSqlIntegrationTest.java`，使用 `postgres:17-alpine` 真实容器，每次 CI 跑过。
-
 ## 达梦 DM 接入
 
 ### 1) 加 JDBC 驱动（须自行获取达梦官方驱动 jar）
@@ -197,10 +181,6 @@ public void initDialect() {
 
 - **UPSERT 走 MERGE INTO**：DM 不支持 `ON DUPLICATE KEY UPDATE` / `ON CONFLICT` 尾子句，所有 `saveDuplicate/Ignore/Replace` 自动改走 `MERGE INTO ... USING (...) src ON (t.pk=src.pk) WHEN MATCHED ... WHEN NOT MATCHED ...` 形态——**用户代码不变**
 - **WAIT n 行锁**：DM 独有 `FOR UPDATE WAIT 5`，本库 `LockMode.FOR_UPDATE_WAIT, waitSeconds=5` 会自动生成
-
-::: warning DM 集成测试
-4.1.x 暂未把 DM 上 CI（驱动获取受限），建议落地前在本地环境用 PG 同样的测试用例对 DM 跑一遍验证。
-:::
 
 ## 自定义方言
 
