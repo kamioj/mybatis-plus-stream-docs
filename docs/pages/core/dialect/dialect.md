@@ -132,12 +132,12 @@ userService.saveDuplicate(List.of(u1, u2, u3),
 
 // Stream 分组聚合
 Map<String, Long> byName = userService.stream()
-    .filter(w -> w.eq(User::getActive, true))
+    .filter(where -> where.eq(User::getActive, true))
     .toMapCount(User::getName);
 
 // 行锁
 userService.list(
-    w -> w.eq(User::getId, 1L),
+    where -> where.eq(User::getId, 1L),
     LockMode.FOR_UPDATE);
 ```
 

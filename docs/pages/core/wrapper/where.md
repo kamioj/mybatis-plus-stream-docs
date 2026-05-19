@@ -122,7 +122,7 @@ where -> where.not(n -> n.eq(User::getRole, "nonexist"))
 ```java
 where -> where.exists(sub -> sub
     .from(Demand.class)
-    .where(sw -> sw.eqColumn(Demand::getUserId, User::getId)))
+    .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId)))
 // SQL: EXISTS (SELECT * FROM demand WHERE demand.user_id = user.id)
 ```
 
@@ -131,7 +131,7 @@ where -> where.exists(sub -> sub
 ```java
 where -> where.notExists(sub -> sub
     .from(Demand.class)
-    .where(sw -> sw.eqColumn(Demand::getUserId, User::getId)))
+    .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId)))
 ```
 
 ### IN 子查询
@@ -139,7 +139,7 @@ where -> where.notExists(sub -> sub
 ```java
 where -> where.inSubSql(User::getId,
     sub -> sub.from(Demand.class)
-        .select(select -> select.selectFunc(func -> func.column(Demand::getUserId), SingleValue::getValue)))
+        .select(select -> select.selectFunc(inner -> inner.column(Demand::getUserId), SingleValue::getValue)))
 // SQL: id IN (SELECT user_id FROM demand)
 ```
 
@@ -149,22 +149,22 @@ where -> where.inSubSql(User::getId,
 
 ```java
 where -> where
-    .eqFunc(f -> f.column(User::getCreditScore), f -> f.value(100))
-    .gtFunc(f -> f.column(User::getId), f -> f.value(0))
-    .geFunc(f -> f.column(User::getCreditScore), f -> f.value(100))
-    .leFunc(f -> f.column(User::getCreditScore), f -> f.value(200))
-    .ltFunc(f -> f.column(User::getCreditScore), f -> f.value(9999))
-    .neFunc(f -> f.column(User::getRole), f -> f.value("admin"))
-    .betweenFunc(f -> f.column(User::getCreditScore), f -> f.value(50), f -> f.value(200))
-    .notBetweenFunc(f -> f.column(User::getCreditScore), f -> f.value(9000), f -> f.value(9999))
-    .isNullFunc(f -> f.column(User::getOpenid))
-    .isNotNullFunc(f -> f.column(User::getUsername))
-    .likeFunc(f -> f.column(User::getUsername), f -> f.value("%user%"))
-    .likeLeftFunc(f -> f.column(User::getUsername), f -> f.value("1"))
-    .likeRightFunc(f -> f.column(User::getUsername), f -> f.value("user"))
-    .likeDefaultFunc(f -> f.column(User::getUsername), f -> f.value("ser"))
-    .notLikeFunc(f -> f.column(User::getUsername), f -> f.value("admin"))
-    .regexpFunc(f -> f.column(User::getUsername), f -> f.value("^user[0-9]+"))
-    .inFunc(f -> f.column(User::getRole), f -> f.values(Arrays.asList("user", "admin")))
-    .notInFunc(f -> f.column(User::getRole), f -> f.values(Arrays.asList("admin", "superadmin")))
+    .eqFunc(arg -> arg.column(User::getCreditScore), arg -> arg.value(100))
+    .gtFunc(arg -> arg.column(User::getId), arg -> arg.value(0))
+    .geFunc(arg -> arg.column(User::getCreditScore), arg -> arg.value(100))
+    .leFunc(arg -> arg.column(User::getCreditScore), arg -> arg.value(200))
+    .ltFunc(arg -> arg.column(User::getCreditScore), arg -> arg.value(9999))
+    .neFunc(arg -> arg.column(User::getRole), arg -> arg.value("admin"))
+    .betweenFunc(arg -> arg.column(User::getCreditScore), arg -> arg.value(50), arg -> arg.value(200))
+    .notBetweenFunc(arg -> arg.column(User::getCreditScore), arg -> arg.value(9000), arg -> arg.value(9999))
+    .isNullFunc(arg -> arg.column(User::getOpenid))
+    .isNotNullFunc(arg -> arg.column(User::getUsername))
+    .likeFunc(arg -> arg.column(User::getUsername), arg -> arg.value("%user%"))
+    .likeLeftFunc(arg -> arg.column(User::getUsername), arg -> arg.value("1"))
+    .likeRightFunc(arg -> arg.column(User::getUsername), arg -> arg.value("user"))
+    .likeDefaultFunc(arg -> arg.column(User::getUsername), arg -> arg.value("ser"))
+    .notLikeFunc(arg -> arg.column(User::getUsername), arg -> arg.value("admin"))
+    .regexpFunc(arg -> arg.column(User::getUsername), arg -> arg.value("^user[0-9]+"))
+    .inFunc(arg -> arg.column(User::getRole), arg -> arg.values(Arrays.asList("user", "admin")))
+    .notInFunc(arg -> arg.column(User::getRole), arg -> arg.values(Arrays.asList("admin", "superadmin")))
 ```

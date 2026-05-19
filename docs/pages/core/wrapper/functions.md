@@ -2,18 +2,26 @@
 
 框架内置 100+ SQL 函数，涵盖聚合、字符串、日期、数学、条件、位运算等，全部通过 Lambda 类型安全调用。
 
+::: tip 阅读方式
+本页是函数速查清单。每段右侧的 `// SQL: xxx` 注释是该 lambda 生成的 SQL 形态，**就是为了让你"看 lambda 像看 SQL"**。需要展开用法的函数在文末"在不同场景中使用函数"一节，按 SELECT / WHERE / ORDER / SET / GROUP BY / HAVING 分类。
+:::
+
+::: warning 方言提示
+当前部分函数硬编码 MySQL 语法（`DATE_FORMAT / STR_TO_DATE / SUBSTRING_INDEX / DATE_ADD INTERVAL / CONVERT`），跨 PG / DM 会报错。计划在 4.2+ 方言化。详见 [多方言支持 — 函数名仍是 MySQL 风格](/pages/core/dialect/dialect#函数名仍是-mysql-风格)。
+:::
+
 ## 聚合函数
 
 ```java
 func -> func.count()                                    // COUNT(*)
 func -> func.count(User::getId)                         // COUNT(id)
-func -> func.countFunc(f -> f.column(User::getId))       // COUNT(id) 函数版
+func -> func.countFunc(arg -> arg.column(User::getId))       // COUNT(id) 函数版
 func -> func.sum(User::getCreditScore)                   // SUM(credit_score)
 func -> func.sumDistinct(User::getCreditScore)           // SUM(DISTINCT credit_score)
-func -> func.sumFunc(f -> f.column(User::getCreditScore)) // SUM(credit_score) 函数版
+func -> func.sumFunc(arg -> arg.column(User::getCreditScore)) // SUM(credit_score) 函数版
 func -> func.avg(User::getCreditScore)                   // AVG(credit_score)
 func -> func.avgDistinct(User::getCreditScore)           // AVG(DISTINCT credit_score)
-func -> func.avgFunc(f -> f.column(User::getCreditScore)) // AVG(credit_score) 函数版
+func -> func.avgFunc(arg -> arg.column(User::getCreditScore)) // AVG(credit_score) 函数版
 func -> func.max(User::getCreditScore)                   // MAX(credit_score)
 func -> func.maxDistinct(User::getCreditScore)           // MAX(DISTINCT credit_score)
 func -> func.min(User::getCreditScore)                   // MIN(credit_score)
@@ -59,9 +67,9 @@ func -> func.abs(-42)                            // ABS(-42) = 42
 ```java
 // CONCAT
 func -> func.concatFunc(
-    f -> f.column(User::getUsername),
-    f -> f.value("-"),
-    f -> f.column(User::getRole))
+    arg -> arg.column(User::getUsername),
+    arg -> arg.value("-"),
+    arg -> arg.column(User::getRole))
 // SQL: CONCAT(username, '-', role)
 
 // LEFT / RIGHT
@@ -69,19 +77,19 @@ func -> func.left("hello_world", 5)               // LEFT('hello_world', 5) = 'h
 func -> func.right("hello_world", 5)              // RIGHT('hello_world', 5) = 'world'
 
 // TRIM
-func -> func.trimFunc(f -> f.value("  hello  "))  // TRIM('  hello  ') = 'hello'
+func -> func.trimFunc(arg -> arg.value("  hello  "))  // TRIM('  hello  ') = 'hello'
 
 // CHAR_LENGTH
-func -> func.charLengthFunc(f -> f.column(User::getUsername))  // CHAR_LENGTH(username)
+func -> func.charLengthFunc(arg -> arg.column(User::getUsername))  // CHAR_LENGTH(username)
 
 // MD5
 func -> func.md5("test")                          // MD5('test')
 
 // SUBSTRING_INDEX
-func -> func.substringIndexFunc(f -> f.value("a-b-c"), "-", 2)  // SUBSTRING_INDEX('a-b-c','-',2) = 'a-b'
+func -> func.substringIndexFunc(arg -> arg.value("a-b-c"), "-", 2)  // SUBSTRING_INDEX('a-b-c','-',2) = 'a-b'
 
 // FIND_IN_SET
-func -> func.findInSetFunc(f -> f.value("b"), f -> f.value("a,b,c"))  // FIND_IN_SET('b','a,b,c') = 2
+func -> func.findInSetFunc(arg -> arg.value("b"), arg -> arg.value("a,b,c"))  // FIND_IN_SET('b','a,b,c') = 2
 
 // HEX
 func -> func.hexNumber(255)                       // HEX(255) = 'FF'
@@ -100,7 +108,7 @@ func -> func.ifnull(User::getOpenid, "N/A")
 // SQL: IFNULL(openid, 'N/A')
 
 // IFNULL 函数版
-func -> func.ifnullFunc(f -> f.column(User::getOpenid), f -> f.value("no_openid"))
+func -> func.ifnullFunc(arg -> arg.column(User::getOpenid), arg -> arg.value("no_openid"))
 ```
 
 ## 日期函数
@@ -110,32 +118,32 @@ func -> func.ifnullFunc(f -> f.column(User::getOpenid), f -> f.value("no_openid"
 func -> func.now()                               // NOW()
 
 // DATE_FORMAT
-func -> func.dateFormatFunc(f -> f.now(), "%Y-%m-%d")
+func -> func.dateFormatFunc(inner -> inner.now(), "%Y-%m-%d")
 // SQL: DATE_FORMAT(NOW(), '%Y-%m-%d')
 
 // DATE_ADD
-func -> func.dateAddFunc(f -> f.now(), f -> f.customColumn("1"), "DAY")
+func -> func.dateAddFunc(inner -> inner.now(), arg -> arg.customColumn("1"), "DAY")
 // SQL: DATE_ADD(NOW(), INTERVAL 1 DAY)
 
 // STR_TO_DATE
-func -> func.strToDateFunc(f -> f.value("2026-01-15"), "%Y-%m-%d")
+func -> func.strToDateFunc(arg -> arg.value("2026-01-15"), "%Y-%m-%d")
 
 // 日期提取
-func -> func.yearFunc(f -> f.now())              // YEAR(NOW())
-func -> func.quarterFunc(f -> f.now())           // QUARTER(NOW())
-func -> func.weekOfYearFunc(f -> f.now())        // WEEKOFYEAR(NOW())
-func -> func.dayOfYearFunc(f -> f.now())         // DAYOFYEAR(NOW())
-func -> func.toDaysFunc(f -> f.now())            // TO_DAYS(NOW())
-func -> func.toSecondsFun(f -> f.now())          // TO_SECONDS(NOW())
+func -> func.yearFunc(inner -> inner.now())              // YEAR(NOW())
+func -> func.quarterFunc(inner -> inner.now())           // QUARTER(NOW())
+func -> func.weekOfYearFunc(inner -> inner.now())        // WEEKOFYEAR(NOW())
+func -> func.dayOfYearFunc(inner -> inner.now())         // DAYOFYEAR(NOW())
+func -> func.toDaysFunc(inner -> inner.now())            // TO_DAYS(NOW())
+func -> func.toSecondsFun(inner -> inner.now())          // TO_SECONDS(NOW())
 ```
 
 ## 数学函数
 
 ```java
-func -> func.sqrtFunc(f -> f.value(144))         // SQRT(144) = 12
+func -> func.sqrtFunc(arg -> arg.value(144))         // SQRT(144) = 12
 func -> func.pi()                                // PI() = 3.14159...
 func -> func.conv(255, 10, 16)                   // CONV(255,10,16) = 'FF'
-func -> func.convFunc(f -> f.value("1010"), 2, 10) // CONV('1010',2,10) = '10'
+func -> func.convFunc(arg -> arg.value("1010"), 2, 10) // CONV('1010',2,10) = '10'
 func -> func.elt(2, "alpha", "beta", "gamma")   // ELT(2,'alpha','beta','gamma') = 'beta'
 func -> func.interval(23, 1, 5, 10, 20, 30)     // INTERVAL(23,1,5,10,20,30) = 4
 ```
@@ -150,12 +158,12 @@ func -> func.convertData(User::getCreditScore, "CHAR")
 ## 位运算
 
 ```java
-func -> func.bAndFunc(f -> f.value(12), f -> f.value(10))        // 12 & 10 = 8
-func -> func.bOrFunc(f -> f.value(12), f -> f.value(10))         // 12 | 10 = 14
-func -> func.bXorFunc(f -> f.value(12), f -> f.value(10))        // 12 ^ 10 = 6
-func -> func.bShiftLeftFunc(f -> f.value(1), f -> f.value(4))    // 1 << 4 = 16
-func -> func.bShiftRightFunc(f -> f.value(16), f -> f.value(2))  // 16 >> 2 = 4
-func -> func.bNotFunc(f -> f.value(0))                            // ~0
+func -> func.bAndFunc(arg -> arg.value(12), arg -> arg.value(10))        // 12 & 10 = 8
+func -> func.bOrFunc(arg -> arg.value(12), arg -> arg.value(10))         // 12 | 10 = 14
+func -> func.bXorFunc(arg -> arg.value(12), arg -> arg.value(10))        // 12 ^ 10 = 6
+func -> func.bShiftLeftFunc(arg -> arg.value(1), arg -> arg.value(4))    // 1 << 4 = 16
+func -> func.bShiftRightFunc(arg -> arg.value(16), arg -> arg.value(2))  // 16 >> 2 = 4
+func -> func.bNotFunc(arg -> arg.value(0))                            // ~0
 ```
 
 ## 在不同场景中使用函数
@@ -163,38 +171,38 @@ func -> func.bNotFunc(f -> f.value(0))                            // ~0
 ### SELECT 中使用
 
 ```java
-select -> select.selectFunc(func -> func.count(), UserDTO::getCount)
-      .selectFunc(func -> func.sum(User::getCreditScore), UserDTO::getTotalScore)
+select -> select.selectFunc(inner -> inner.count(), UserDTO::getCount)
+      .selectFunc(inner -> inner.sum(User::getCreditScore), UserDTO::getTotalScore)
 ```
 
 ### WHERE 中使用
 
 ```java
-where -> where.eqFunc(f -> f.column(User::getCreditScore), f -> f.value(100))
-      .gtFunc(f -> f.column(User::getId), f -> f.value(0))
+where -> where.eqFunc(arg -> arg.column(User::getCreditScore), arg -> arg.value(100))
+      .gtFunc(arg -> arg.column(User::getId), arg -> arg.value(0))
 ```
 
 ### ORDER BY 中使用
 
 ```java
-order -> order.orderFunc(func -> func.charLengthFunc(f -> f.column(User::getUsername)), true)
+order -> order.orderFunc(inner -> inner.charLengthFunc(arg -> arg.column(User::getUsername)), true)
 ```
 
 ### SET 中使用
 
 ```java
-set -> set.setFunc(User::getCreditScore, f -> f.add(User::getCreditScore, 5))
+set -> set.setFunc(User::getCreditScore, inner -> inner.add(User::getCreditScore, 5))
 ```
 
 ### GROUP BY 中使用
 
 ```java
-group -> group.groupByFunc(f -> f.leftFunc(ff -> ff.column(User::getUsername), 4))
+group -> group.groupByFunc(inner -> inner.leftFunc(inner -> inner.column(User::getUsername), 4))
 ```
 
 ### HAVING 中使用
 
 ```java
 group -> group.groupBy(User::getRole)
-      .having(h -> h.gtFunc(f -> f.count(), f -> f.value(1)))
+      .having(h -> h.gtFunc(inner -> inner.count(), arg -> arg.value(1)))
 ```

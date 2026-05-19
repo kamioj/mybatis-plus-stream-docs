@@ -15,9 +15,9 @@ List<RoleStatsDTO> stats = userService.listGroup(
     group -> group.groupBy(User::getRole),
     where -> {},
     select -> select.select(User::getRole, RoleStatsDTO::getRole)
-          .selectFunc(func -> func.count(), RoleStatsDTO::getCount)
-          .selectFunc(func -> func.avg(User::getCreditScore), RoleStatsDTO::getAvgScore)
-          .selectFunc(func -> func.max(User::getCreditScore), RoleStatsDTO::getMaxScore),
+          .selectFunc(inner -> inner.count(), RoleStatsDTO::getCount)
+          .selectFunc(inner -> inner.avg(User::getCreditScore), RoleStatsDTO::getAvgScore)
+          .selectFunc(inner -> inner.max(User::getCreditScore), RoleStatsDTO::getMaxScore),
     RoleStatsDTO.class);
 ```
 
@@ -37,10 +37,10 @@ List<UserOrderStatsDTO> top10 = userService.listGroupJoin(
     join -> join.leftJoin(Order.class, User::getId, Order::getUserId),
     group -> group.groupBy(User::getId),
     where -> where.eq(User::getRole, "user"),
-    order -> order.orderFunc(func -> func.count(Order::getId), false),
+    order -> order.orderFunc(inner -> inner.count(Order::getId), false),
     10,
     select -> select.select(User::getUsername, UserOrderStatsDTO::getUsername)
-          .selectFunc(func -> func.count(Order::getId), UserOrderStatsDTO::getOrderCount),
+          .selectFunc(inner -> inner.count(Order::getId), UserOrderStatsDTO::getOrderCount),
     UserOrderStatsDTO.class);
 ```
 
@@ -65,13 +65,13 @@ List<UserDetailDTO> list = userService.list(
           .select(User::getCreditScore, UserDetailDTO::getScore)
           .selectSubSql(
               sub -> sub.from(Demand.class)
-                  .select(subSelect -> subSelect.selectFunc(func -> func.count(), SingleValue::getValue))
-                  .where(sw -> sw.eqColumn(Demand::getUserId, User::getId)),
+                  .select(subSelect -> subSelect.selectFunc(inner -> inner.count(), SingleValue::getValue))
+                  .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId)),
               UserDetailDTO::getDemandCount)
           .selectSubSql(
               sub -> sub.from(Order.class)
-                  .select(subSelect -> subSelect.selectFunc(func -> func.count(), SingleValue::getValue))
-                  .where(sw -> sw.eqColumn(Order::getUserId, User::getId)),
+                  .select(subSelect -> subSelect.selectFunc(inner -> inner.count(), SingleValue::getValue))
+                  .where(subWhere -> subWhere.eqColumn(Order::getUserId, User::getId)),
               UserDetailDTO::getOrderCount),
     UserDetailDTO.class);
 ```
@@ -87,7 +87,7 @@ List<UserOrderStatsDTO> activeUsers = userService.listGroupJoin(
                   .having(func -> func.count(Order::getId), 5, ">="),
     where -> {},
     select -> select.select(User::getUsername, UserOrderStatsDTO::getUsername)
-          .selectFunc(func -> func.count(Order::getId), UserOrderStatsDTO::getOrderCount),
+          .selectFunc(inner -> inner.count(Order::getId), UserOrderStatsDTO::getOrderCount),
     UserOrderStatsDTO.class);
 ```
 
@@ -103,15 +103,15 @@ public class MonthlyStatsDTO {
 }
 
 List<MonthlyStatsDTO> monthly = userService.listGroup(
-    group -> group.groupByFunc(func -> func.dateFormatFunc(
-        f -> f.column(User::getCreateTime), "%Y-%m")),
+    group -> group.groupByFunc(inner -> inner.dateFormatFunc(
+        arg -> arg.column(User::getCreateTime), "%Y-%m")),
     where -> {},
-    order -> order.orderFunc(func -> func.dateFormatFunc(
-        f -> f.column(User::getCreateTime), "%Y-%m"), true),
+    order -> order.orderFunc(inner -> inner.dateFormatFunc(
+        arg -> arg.column(User::getCreateTime), "%Y-%m"), true),
     12,
-    select -> select.selectFunc(func -> func.dateFormatFunc(
-            f -> f.column(User::getCreateTime), "%Y-%m"), MonthlyStatsDTO::getMonth)
-          .selectFunc(func -> func.count(), MonthlyStatsDTO::getCount),
+    select -> select.selectFunc(inner -> inner.dateFormatFunc(
+            arg -> arg.column(User::getCreateTime), "%Y-%m"), MonthlyStatsDTO::getMonth)
+          .selectFunc(inner -> inner.count(), MonthlyStatsDTO::getCount),
     MonthlyStatsDTO.class);
 ```
 
@@ -131,8 +131,8 @@ List<RoleUsersDTO> result = userService.listGroup(
     group -> group.groupBy(User::getRole),
     where -> {},
     select -> select.select(User::getRole, RoleUsersDTO::getRole)
-          .selectFunc(func -> func.count(), RoleUsersDTO::getCount)
-          .selectFunc(func -> func.groupConcat(User::getUsername, ","), RoleUsersDTO::getAllUsernames),
+          .selectFunc(inner -> inner.count(), RoleUsersDTO::getCount)
+          .selectFunc(inner -> inner.groupConcat(User::getUsername, ","), RoleUsersDTO::getAllUsernames),
     RoleUsersDTO.class);
 // 结果: {role: "user", count: 10, allUsernames: "user1,user2,..."}
 ```

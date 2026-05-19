@@ -17,11 +17,11 @@ public void transferScore(Long fromId, Long toId, int amount) {
     }
 
     userService.update(
-        set -> set.setFunc(User::getCreditScore, f -> f.subtract(User::getCreditScore, amount)),
+        set -> set.setFunc(User::getCreditScore, inner -> inner.subtract(User::getCreditScore, amount)),
         where -> where.eq(User::getId, fromId));
 
     userService.update(
-        set -> set.setFunc(User::getCreditScore, f -> f.add(User::getCreditScore, amount)),
+        set -> set.setFunc(User::getCreditScore, inner -> inner.add(User::getCreditScore, amount)),
         where -> where.eq(User::getId, toId));
 }
 ```

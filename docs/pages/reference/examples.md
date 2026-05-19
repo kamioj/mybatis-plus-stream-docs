@@ -52,8 +52,8 @@ List<UserStatsDTO> stats = userService.listGroup(
     group -> group.groupBy(User::getRole),
     where -> {},
     select -> select.select(User::getRole, UserStatsDTO::getRole)
-          .selectFunc(func -> func.count(), UserStatsDTO::getCount)
-          .selectFunc(func -> func.avg(User::getCreditScore), UserStatsDTO::getAvgScore),
+          .selectFunc(inner -> inner.count(), UserStatsDTO::getCount)
+          .selectFunc(inner -> inner.avg(User::getCreditScore), UserStatsDTO::getAvgScore),
     UserStatsDTO.class);
 ```
 
@@ -64,10 +64,10 @@ List<UserOrderStatsDTO> stats = userService.listGroupJoin(
     join -> join.leftJoin(Order.class, User::getId, Order::getUserId),
     group -> group.groupBy(User::getId),
     where -> where.eq(User::getRole, "user"),
-    order -> order.orderFunc(func -> func.count(Order::getId), false),  // 按订单数降序
+    order -> order.orderFunc(inner -> inner.count(Order::getId), false),  // 按订单数降序
     10,  // Top 10
     select -> select.select(User::getUsername, UserOrderStatsDTO::getUsername)
-          .selectFunc(func -> func.count(Order::getId), UserOrderStatsDTO::getOrderCount),
+          .selectFunc(inner -> inner.count(Order::getId), UserOrderStatsDTO::getOrderCount),
     UserOrderStatsDTO.class);
 ```
 
@@ -84,13 +84,13 @@ List<UserDetailDTO> list = userService.list(
           .select(User::getCreditScore, UserDetailDTO::getScore)
           .selectSubSql(
               sub -> sub.from(Demand.class)
-                  .select(subSelect -> subSelect.selectFunc(func -> func.count(), SingleValue::getValue))
-                  .where(sw -> sw.eqColumn(Demand::getUserId, User::getId)),
+                  .select(subSelect -> subSelect.selectFunc(inner -> inner.count(), SingleValue::getValue))
+                  .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId)),
               UserDetailDTO::getDemandCount)
           .selectSubSql(
               sub -> sub.from(Order.class)
-                  .select(subSelect -> subSelect.selectFunc(func -> func.count(), SingleValue::getValue))
-                  .where(sw -> sw.eqColumn(Order::getUserId, User::getId)),
+                  .select(subSelect -> subSelect.selectFunc(inner -> inner.count(), SingleValue::getValue))
+                  .where(subWhere -> subWhere.eqColumn(Order::getUserId, User::getId)),
               UserDetailDTO::getOrderCount),
     UserDetailDTO.class);
 ```
@@ -115,10 +115,10 @@ List<UserDisplayDTO> list = userService.list(
     order -> order.orderAsc(User::getId),
     100,
     select -> select.select(User::getUsername, UserDisplayDTO::getUsername)
-          .selectCase(c -> c
-              .whenThenValue(cw -> cw.ge(User::getCreditScore, 200), "🟢 优秀")
-              .whenThenValue(cw -> cw.ge(User::getCreditScore, 100), "🟡 良好")
-              .whenThenValue(cw -> cw.ge(User::getCreditScore, 60), "🟠 一般")
+          .selectCase(caseExpr -> caseExpr
+              .whenThenValue(caseWhere -> caseWhere.ge(User::getCreditScore, 200), "🟢 优秀")
+              .whenThenValue(caseWhere -> caseWhere.ge(User::getCreditScore, 100), "🟡 良好")
+              .whenThenValue(caseWhere -> caseWhere.ge(User::getCreditScore, 60), "🟠 一般")
               .elseValue("🔴 差"),
               UserDisplayDTO::getCreditLevel),
     UserDisplayDTO.class);
@@ -153,11 +153,11 @@ public void transferScore(Long fromId, Long toId, int amount) {
     }
 
     userService.update(
-        set -> set.setFunc(User::getCreditScore, f -> f.subtract(User::getCreditScore, amount)),
+        set -> set.setFunc(User::getCreditScore, inner -> inner.subtract(User::getCreditScore, amount)),
         where -> where.eq(User::getId, fromId));
 
     userService.update(
-        set -> set.setFunc(User::getCreditScore, f -> f.add(User::getCreditScore, amount)),
+        set -> set.setFunc(User::getCreditScore, inner -> inner.add(User::getCreditScore, amount)),
         where -> where.eq(User::getId, toId));
 }
 ```

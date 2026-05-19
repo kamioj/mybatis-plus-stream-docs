@@ -84,7 +84,7 @@ long total = page.getTotal();
 ```java
 int updated = userService.updateJoin(
     join -> join.innerJoin(Order.class, User::getId, Order::getUserId),
-    set -> set.setFunc(User::getCreditScore, f -> f.add(User::getCreditScore, 10)),
+    set -> set.setFunc(User::getCreditScore, inner -> inner.add(User::getCreditScore, 10)),
     where -> where.eq(Order::getStatus, "已完成"));
 ```
 

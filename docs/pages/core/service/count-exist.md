@@ -1,52 +1,80 @@
 # count / exist
 
+判断"有多少条"或"有没有"。
+
 ## count — 统计数量
 
-```java
-// 统计角色为 user 的用户数量
-int count = userService.count(where -> where.eq(User::getRole, "user"));
-
-// 统计全部
-int total = userService.count(where -> {});
-
-// 组合条件
-int count = userService.count(where -> where
-    .eq(User::getRole, "user")
-    .ge(User::getCreditScore, 100));
+```sql
+SELECT COUNT(*) FROM user WHERE role = 'user'
 ```
 
-**方法签名：**
 ```java
-int count(Consumer<NormalWhereLambdaQueryWrapper> predicate)
+// Stream 形式
+long count = userService.stream()
+    .filter(where -> where.eq(User::getRole, "user"))
+    .count();
+
+// 一行语法
+int count = userService.count(where -> where.eq(User::getRole, "user"));
+```
+
+统计全表：
+
+```sql
+SELECT COUNT(*) FROM user
+```
+
+```java
+long total = userService.stream().count();
+
+// 一行语法
+int total = userService.count(where -> {});
+```
+
+组合条件：
+
+```sql
+SELECT COUNT(*) FROM user WHERE role = 'user' AND credit_score >= 100
+```
+
+```java
+long count = userService.stream()
+    .filter(where -> where.eq(User::getRole, "user").ge(User::getCreditScore, 100))
+    .count();
 ```
 
 ## exist — 判断是否存在
 
+```sql
+-- 框架翻译为带 LIMIT 1 的 EXISTS 优化
+SELECT 1 FROM user WHERE username = 'user1' LIMIT 1
+```
+
 ```java
-// 判断用户名是否已存在
+// Stream 形式
+boolean exists = userService.stream()
+    .filter(where -> where.eq(User::getUsername, "user1"))
+    .exist();
+
+// 一行语法
 boolean exists = userService.exist(where -> where.eq(User::getUsername, "user1"));
-
-// 判断是否有管理员
-boolean hasAdmin = userService.exist(where -> where.eq(User::getRole, "admin"));
 ```
 
-**方法签名：**
-```java
-boolean exist(Consumer<NormalWhereLambdaQueryWrapper> predicate)
-```
-
-::: tip 实际应用
-`exist` 比 `count` 更高效，当你只需要知道"有没有"而不关心"有多少"时，优先使用 `exist`。
+::: tip exist 比 count 更快
+`exist` 找到一条就返回，`count(*)` 必须扫到满足条件的全部行。**只需要"有没有"时优先用 `exist`**。
 :::
 
-## 常见用法
+## 常用模式
 
 ### 注册时检查用户名重复
 
 ```java
 public User register(String username, String password) {
-    if (userService.exist(where -> where.eq(User::getUsername, username))) {
-        throw new RuntimeException("用户名已存在");
+    boolean taken = userService.stream()
+        .filter(where -> where.eq(User::getUsername, username))
+        .exist();
+    if (taken) {
+        throw new BusinessException("用户名已存在");
     }
     User user = new User();
     user.setUsername(username);
@@ -56,10 +84,30 @@ public User register(String username, String password) {
 }
 ```
 
-### 统计不同状态的数量
+### 多状态计数：推荐 toMapCount 一次搞定
+
+老写法（三条 SQL）：
 
 ```java
-int pending = demandService.count(where -> where.eq(Demand::getStatus, "待接单"));
-int accepted = demandService.count(where -> where.eq(Demand::getStatus, "已接单"));
+int pending   = demandService.count(where -> where.eq(Demand::getStatus, "待接单"));
+int accepted  = demandService.count(where -> where.eq(Demand::getStatus, "已接单"));
 int completed = demandService.count(where -> where.eq(Demand::getStatus, "已完成"));
 ```
+
+新写法（一条 SQL，SQL 下推 GROUP BY）：
+
+```sql
+SELECT status, COUNT(*) FROM demand GROUP BY status
+```
+
+```java
+Map<String, Long> byStatus = demandService.stream().toMapCount(Demand::getStatus);
+// { "待接单": 12, "已接单": 5, "已完成": 130 }
+```
+
+详见 [Stream 收集器 - toMapCount](/pages/core/stream/collectors#tomapcount-——-分组计数)。
+
+## 相关
+
+- [Stream API 全景](/pages/core/stream/stream)
+- [Stream 收集器](/pages/core/stream/collectors) — `toMapCount` / `toMapSum` 等下推聚合

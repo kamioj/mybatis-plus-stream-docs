@@ -1,17 +1,12 @@
 # order
 
-ORDER BY 排序构造器，用于 `list`、`listJoin`、`listGroup`、`stream` 等方法。
-
-## 方法签名
-
-排序通过 `Consumer<OrderLambdaQueryWrapper>` 回调传入：
-
-```java
-order -> order.orderAsc(User::getId)     // 升序
-order -> order.orderDesc(User::getId)    // 降序
-```
+`ORDER BY` 子句构造器，用于 `list / listJoin / listGroup / stream` 等所有列表方法。
 
 ## 升序
+
+```sql
+SELECT * FROM user WHERE role = 'user' ORDER BY id ASC LIMIT 10
+```
 
 ```java
 List<User> list = userService.list(
@@ -22,6 +17,10 @@ List<User> list = userService.list(
 
 ## 降序
 
+```sql
+SELECT * FROM user WHERE role = 'user' ORDER BY id DESC LIMIT 10
+```
+
 ```java
 List<User> list = userService.list(
     where -> where.eq(User::getRole, "user"),
@@ -31,36 +30,63 @@ List<User> list = userService.list(
 
 ## 多字段排序
 
+```sql
+ORDER BY role ASC, id DESC
+```
+
 ```java
 order -> order.orderAsc(User::getRole).orderDesc(User::getId)
-// SQL: ORDER BY role ASC, id DESC
 ```
 
 ## 随机排序
 
-```java
-// 随机排序
-order -> order.orderByRandom(true)
-// SQL: ORDER BY RAND()
+```sql
+ORDER BY RAND()
+```
 
-// 带种子随机（结果可复现）
+```java
+order -> order.orderByRandom(true)
+```
+
+带种子（结果可复现，便于测试）：
+
+```sql
+ORDER BY RAND(42)
+```
+
+```java
 order -> order.orderByRandom(true, 42)
-// SQL: ORDER BY RAND(42)
 ```
 
 ## 按函数排序
 
-```java
-// 按用户名长度排序
-order -> order.orderFunc(func -> func.charLengthFunc(f -> f.column(User::getUsername)), true)
-// SQL: ORDER BY CHAR_LENGTH(username) ASC
+按字段长度：
 
-// 按计数排序（常用于 GROUP BY）
-order -> order.orderFunc(func -> func.count(Order::getId), false)
-// SQL: ORDER BY COUNT(order_id) DESC
+```sql
+ORDER BY CHAR_LENGTH(username) ASC
+```
+
+```java
+order -> order.orderFunc(
+    func -> func.charLengthFunc(arg -> arg.column(User::getUsername)),
+    true)   // true = ASC, false = DESC
+```
+
+按聚合（在 GROUP BY 场景）：
+
+```sql
+... GROUP BY user_id ORDER BY COUNT(order_id) DESC
+```
+
+```java
+order -> order.orderFunc(inner -> inner.count(Order::getId), false)
 ```
 
 ## 在 Stream 中使用
+
+```sql
+SELECT * FROM user WHERE role = 'user' ORDER BY id DESC LIMIT 10
+```
 
 ```java
 List<User> list = userService.stream()
@@ -70,15 +96,27 @@ List<User> list = userService.stream()
     .collect(Collectors.toList());
 ```
 
-## 在分组查询中使用
+## 在分组场景使用（按聚合降序取 Top）
+
+```sql
+SELECT role, COUNT(*) AS cnt FROM user GROUP BY role
+ORDER BY COUNT(*) DESC LIMIT 10
+```
 
 ```java
 List<UserDTO> list = userService.listGroup(
     group -> group.groupBy(User::getRole),
     where -> {},
-    order -> order.orderFunc(func -> func.count(), false),  // 按计数降序
+    order -> order.orderFunc(inner -> inner.count(), false),
     10,
     select -> select.select(User::getRole, UserDTO::getRole)
-          .selectFunc(func -> func.count(), UserDTO::getCount),
+                    .selectFunc(inner -> inner.count(), UserDTO::getCount),
     UserDTO.class);
 ```
+
+## 方言差异
+
+- **MySQL / PostgreSQL**：`ORDER BY ... NULLS FIRST/LAST` PG 原生支持，MySQL 需 `ORDER BY col IS NULL, col`
+- **达梦**：与 PG 类似，`NULLS FIRST/LAST` 原生
+
+当前 `order` API 不直接暴露 `NULLS FIRST/LAST`，需要时通过 `orderFunc` 配合 `IFNULL` 或 `CASE WHEN` 模拟。

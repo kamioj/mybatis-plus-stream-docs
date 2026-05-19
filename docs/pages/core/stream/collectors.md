@@ -30,7 +30,7 @@ SELECT DISTINCT role FROM user WHERE active = true
 
 ```java
 Set<String> roles = userService.stream()
-    .filter(w -> w.eq(User::getActive, true))
+    .filter(where -> where.eq(User::getActive, true))
     .toSet(User::getRole);
 ```
 
@@ -46,7 +46,7 @@ SELECT id, name FROM user WHERE role = 'admin'
 
 ```java
 Map<Long, String> idToName = userService.stream()
-    .filter(w -> w.eq(User::getRole, "admin"))
+    .filter(where -> where.eq(User::getRole, "admin"))
     .toMap(User::getId, User::getName);
 ```
 
@@ -69,7 +69,7 @@ SELECT * FROM user WHERE active = true
 
 ```java
 Map<String, List<User>> byRole = userService.stream()
-    .filter(w -> w.eq(User::getActive, true))
+    .filter(where -> where.eq(User::getActive, true))
     .groupingBy(User::getRole);
 ```
 
@@ -85,7 +85,7 @@ SELECT role, COUNT(*) FROM user WHERE active = true GROUP BY role
 
 ```java
 Map<String, Long> countByRole = userService.stream()
-    .filter(w -> w.eq(User::getActive, true))
+    .filter(where -> where.eq(User::getActive, true))
     .toMapCount(User::getRole);
 // 结果：{ "admin": 3, "user": 42, "guest": 17 }
 ```
@@ -145,7 +145,7 @@ SELECT COUNT(*) FROM user WHERE role = 'user'
 
 ```java
 long total = userService.stream()
-    .filter(w -> w.eq(User::getRole, "user"))
+    .filter(where -> where.eq(User::getRole, "user"))
     .count();
 ```
 

@@ -64,7 +64,7 @@ set -> set.set(User::getCreditScore, 100)
 // SQL: SET credit_score = 100
 
 // setFunc: 使用函数表达式（可以引用当前列值）
-set -> set.setFunc(User::getCreditScore, f -> f.add(User::getCreditScore, 5))
+set -> set.setFunc(User::getCreditScore, inner -> inner.add(User::getCreditScore, 5))
 // SQL: SET credit_score = credit_score + 5
 ```
 
@@ -101,11 +101,11 @@ userService.listJoin(
 ```java
 // ✅ 正确
 sub -> sub.from(Demand.class)
-    .select(subSelect -> subSelect.selectFunc(func -> func.count(), SingleValue::getValue))
+    .select(subSelect -> subSelect.selectFunc(inner -> inner.count(), SingleValue::getValue))
 
 // ❌ 错误 — 不能用自定义 DTO
 sub -> sub.from(Demand.class)
-    .select(subSelect -> subSelect.selectFunc(func -> func.count(), MyDTO::getCount))
+    .select(subSelect -> subSelect.selectFunc(inner -> inner.count(), MyDTO::getCount))
 ```
 
 ## DATE_ADD 的 INTERVAL 值报错？
@@ -114,10 +114,10 @@ INTERVAL 后的数字不能用 `value()` 参数化，要用 `customColumn()`：
 
 ```java
 // ✅ 正确
-func -> func.dateAddFunc(f -> f.now(), f -> f.customColumn("7"), "DAY")
+func -> func.dateAddFunc(inner -> inner.now(), arg -> arg.customColumn("7"), "DAY")
 
 // ❌ 错误 — INTERVAL 不支持参数化
-func -> func.dateAddFunc(f -> f.now(), f -> f.value(7), "DAY")
+func -> func.dateAddFunc(inner -> inner.now(), arg -> arg.value(7), "DAY")
 ```
 
 ## `condition` 参数的使用场景？

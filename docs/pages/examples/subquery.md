@@ -36,7 +36,7 @@ List<User> users = userService.list(where -> where
 List<User> users = userService.list(where -> where
     .exists(sub -> sub
         .from(Demand.class)
-        .where(sw -> sw.eqColumn(Demand::getUserId, User::getId)
+        .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId)
                       .eq(Demand::getStatus, "待接单"))));
 ```
 
@@ -65,8 +65,8 @@ List<UserWithDemandCountDTO> list = userService.list(
     select -> select.select(User::getUsername, UserWithDemandCountDTO::getUsername)
           .selectSubSql(
               sub -> sub.from(Demand.class)
-                  .select(subSelect -> subSelect.selectFunc(func -> func.count(), SingleValue::getValue))
-                  .where(sw -> sw.eqColumn(Demand::getUserId, User::getId)),
+                  .select(subSelect -> subSelect.selectFunc(inner -> inner.count(), SingleValue::getValue))
+                  .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId)),
               UserWithDemandCountDTO::getDemandCount),
     UserWithDemandCountDTO.class);
 ```
@@ -83,11 +83,11 @@ List<UserWithDemandCountDTO> list = userService.list(
 // 例：积分高于平均值的用户（两步法）
 Double avg = userService.getValue(
     w -> {},
-    s -> s.selectFunc(f -> f.avg(User::getCreditScore), SingleValue::getValue),
+    select -> select.selectFunc(inner -> inner.avg(User::getCreditScore), SingleValue::getValue),
     Double.class);
 
 List<User> aboveAvg = userService.list(
-    w -> w.gt(User::getCreditScore, avg.intValue()));
+    where -> where.gt(User::getCreditScore, avg.intValue()));
 ```
 
 完整能力对照参见 [子查询专章 — 当前不支持的形态](/pages/core/wrapper/sub-query#当前不支持的形态)。
@@ -109,10 +109,10 @@ List<UserDisplayDTO> list = userService.list(
     100,
     select -> select.select(User::getUsername, UserDisplayDTO::getUsername)
           .select(User::getCreditScore, UserDisplayDTO::getScore)
-          .selectCase(c -> c
-              .whenThenValue(cw -> cw.ge(User::getCreditScore, 200), "优秀")
-              .whenThenValue(cw -> cw.ge(User::getCreditScore, 100), "良好")
-              .whenThenValue(cw -> cw.ge(User::getCreditScore, 60), "一般")
+          .selectCase(caseExpr -> caseExpr
+              .whenThenValue(caseWhere -> caseWhere.ge(User::getCreditScore, 200), "优秀")
+              .whenThenValue(caseWhere -> caseWhere.ge(User::getCreditScore, 100), "良好")
+              .whenThenValue(caseWhere -> caseWhere.ge(User::getCreditScore, 60), "一般")
               .elseValue("差"),
               UserDisplayDTO::getCreditLevel),
     UserDisplayDTO.class);

@@ -32,8 +32,8 @@ select -> select.select(User::getUsername, UserOrderDTO::getUsername)
 ### 函数到字段
 
 ```java
-select -> select.selectFunc(func -> func.count(), UserOrderDTO::getDemandCount)
-      .selectFunc(func -> func.avg(User::getCreditScore), UserOrderDTO::getAvgScore)
+select -> select.selectFunc(inner -> inner.count(), UserOrderDTO::getDemandCount)
+      .selectFunc(inner -> inner.avg(User::getCreditScore), UserOrderDTO::getAvgScore)
 ```
 
 ### 子查询到字段
@@ -41,16 +41,16 @@ select -> select.selectFunc(func -> func.count(), UserOrderDTO::getDemandCount)
 ```java
 select -> select.selectSubSql(
     sub -> sub.from(Demand.class)
-        .select(subSelect -> subSelect.selectFunc(func -> func.count(), SingleValue::getValue))
-        .where(sw -> sw.eqColumn(Demand::getUserId, User::getId)),
+        .select(subSelect -> subSelect.selectFunc(inner -> inner.count(), SingleValue::getValue))
+        .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId)),
     UserOrderDTO::getDemandCount)
 ```
 
 ### CASE WHEN 到字段
 
 ```java
-select -> select.selectCase(c -> c
-    .whenThenValue(cw -> cw.ge(User::getCreditScore, 100), "优秀")
+select -> select.selectCase(caseExpr -> caseExpr
+    .whenThenValue(caseWhere -> caseWhere.ge(User::getCreditScore, 100), "优秀")
     .elseValue("普通"),
     UserOrderDTO::getStatus)
 ```
@@ -62,13 +62,13 @@ select -> select.selectCase(c -> c
 ```java
 // 子查询中必须用 SingleValue::getValue 作为映射目标
 sub -> sub.from(Demand.class)
-    .select(subSelect -> subSelect.selectFunc(func -> func.count(), SingleValue::getValue))
-    .where(sw -> sw.eqColumn(Demand::getUserId, User::getId))
+    .select(subSelect -> subSelect.selectFunc(inner -> inner.count(), SingleValue::getValue))
+    .where(subWhere -> subWhere.eqColumn(Demand::getUserId, User::getId))
 
 // IN 子查询同理
 where -> where.inSubSql(User::getId,
     sub -> sub.from(Demand.class)
-        .select(select -> select.selectFunc(func -> func.column(Demand::getUserId), SingleValue::getValue)))
+        .select(select -> select.selectFunc(inner -> inner.column(Demand::getUserId), SingleValue::getValue)))
 ```
 
 ::: warning
@@ -82,10 +82,10 @@ where -> where.inSubSql(User::getId,
 ```java
 // DATE_ADD(NOW(), INTERVAL 1 DAY)
 // 这里的 "1" 不能用 value(1)，因为 INTERVAL 后不能参数化
-func -> func.dateAddFunc(f -> f.now(), f -> f.customColumn("1"), "DAY")
+func -> func.dateAddFunc(inner -> inner.now(), arg -> arg.customColumn("1"), "DAY")
 
 // DATE_ADD(NOW(), INTERVAL -3 HOUR)
-func -> func.dateAddFunc(f -> f.now(), f -> f.customColumn("-3"), "HOUR")
+func -> func.dateAddFunc(inner -> inner.now(), arg -> arg.customColumn("-3"), "HOUR")
 ```
 
 ## 字段类型建议
@@ -119,8 +119,8 @@ List<UserStatsDTO> stats = userService.listGroup(
     group -> group.groupBy(User::getRole),
     where -> {},
     select -> select.select(User::getRole, UserStatsDTO::getRole)
-          .selectFunc(func -> func.count(), UserStatsDTO::getUserCount)
-          .selectFunc(func -> func.avg(User::getCreditScore), UserStatsDTO::getAvgScore)
-          .selectFunc(func -> func.groupConcat(User::getUsername, ","), UserStatsDTO::getAllUsernames),
+          .selectFunc(inner -> inner.count(), UserStatsDTO::getUserCount)
+          .selectFunc(inner -> inner.avg(User::getCreditScore), UserStatsDTO::getAvgScore)
+          .selectFunc(inner -> inner.groupConcat(User::getUsername, ","), UserStatsDTO::getAllUsernames),
     UserStatsDTO.class);
 ```

@@ -26,9 +26,9 @@ public List<UserExportDTO> exportUsers(
               .select(User::getNickname, UserExportDTO::getNickname)
               .select(User::getRole, UserExportDTO::getRole)
               .select(User::getCreditScore, UserExportDTO::getCreditScore)
-              .selectCase(c -> c
-                  .whenThenValue(cw -> cw.ge(User::getCreditScore, 200), "优秀")
-                  .whenThenValue(cw -> cw.ge(User::getCreditScore, 100), "良好")
+              .selectCase(caseExpr -> caseExpr
+                  .whenThenValue(caseWhere -> caseWhere.ge(User::getCreditScore, 200), "优秀")
+                  .whenThenValue(caseWhere -> caseWhere.ge(User::getCreditScore, 100), "良好")
                   .elseValue("一般"),
                   UserExportDTO::getCreditLevel),
         UserExportDTO.class);
@@ -53,14 +53,14 @@ public List<ExportStatsDTO> exportStats() {
     return userService.listGroup(
         group -> group.groupBy(User::getRole),
         where -> {},
-        order -> order.orderFunc(func -> func.count(), false),
+        order -> order.orderFunc(inner -> inner.count(), false),
         100,
         select -> select.select(User::getRole, ExportStatsDTO::getRole)
-              .selectFunc(func -> func.count(), ExportStatsDTO::getCount)
-              .selectFunc(func -> func.avg(User::getCreditScore), ExportStatsDTO::getAvgScore)
-              .selectFunc(func -> func.max(User::getCreditScore), ExportStatsDTO::getMaxScore)
-              .selectFunc(func -> func.min(User::getCreditScore), ExportStatsDTO::getMinScore)
-              .selectFunc(func -> func.groupConcat(User::getUsername, ","), ExportStatsDTO::getUserList),
+              .selectFunc(inner -> inner.count(), ExportStatsDTO::getCount)
+              .selectFunc(inner -> inner.avg(User::getCreditScore), ExportStatsDTO::getAvgScore)
+              .selectFunc(inner -> inner.max(User::getCreditScore), ExportStatsDTO::getMaxScore)
+              .selectFunc(inner -> inner.min(User::getCreditScore), ExportStatsDTO::getMinScore)
+              .selectFunc(inner -> inner.groupConcat(User::getUsername, ","), ExportStatsDTO::getUserList),
         ExportStatsDTO.class);
 }
 ```
@@ -127,7 +127,7 @@ public List<Map<String, Object>> roleOptions() {
         group -> group.groupBy(User::getRole),
         where -> {},
         select -> select.select(User::getRole, RoleOptionDTO::getRole)
-              .selectFunc(func -> func.count(), RoleOptionDTO::getCount),
+              .selectFunc(inner -> inner.count(), RoleOptionDTO::getCount),
         RoleOptionDTO.class)
     .stream()
     .map(dto -> Map.<String, Object>of(

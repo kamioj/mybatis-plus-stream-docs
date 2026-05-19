@@ -1,60 +1,115 @@
 # getValue / listValues
 
-直接获取某个字段的值或函数计算结果，而非完整实体。
+只取某一列（或函数计算结果）的值，**而非完整实体**。`getValue` 取单值，`listValues` 取列表。
 
-## getValue — 获取单个值
+## getValue — 单个值
 
-### 三参数版：字段匹配 + 取值
+### 按条件取列值
 
-```java
-// 查 id=1 的用户名
-String name = userService.getValue(User::getId, 1L, User::getUsername);
+```sql
+SELECT nickname FROM user WHERE username = 'user1' LIMIT 1
 ```
 
-### 条件 + 字段
-
 ```java
+// Stream 形式
+String nick = userService.stream()
+    .filter(where -> where.eq(User::getUsername, "user1"))
+    .mapToColumn(User::getNickname)
+    .findFirst()
+    .orElse(null);
+
+// 一行语法
 String nick = userService.getValue(
     where -> where.eq(User::getUsername, "user1"),
     User::getNickname);
 ```
 
-### 条件 + 函数表达式
+### 字段匹配 + 取值
+
+```sql
+SELECT username FROM user WHERE id = 1 LIMIT 1
+```
 
 ```java
-// 获取用户名长度
+// 一行语法（最简）
+String name = userService.getValue(User::getId, 1L, User::getUsername);
+```
+
+### 函数表达式取值
+
+```sql
+SELECT CHAR_LENGTH(username) FROM user WHERE username = 'user1' LIMIT 1
+```
+
+```java
+// Stream 形式
+Object len = userService.stream()
+    .filter(where -> where.eq(User::getUsername, "user1"))
+    .mapToValue(func -> func.charLengthFunc(arg -> arg.column(User::getUsername)))
+    .findFirst()
+    .orElse(null);
+
+// 一行语法
 Object len = userService.getValue(
     where -> where.eq(User::getUsername, "user1"),
-    func -> func.charLengthFunc(f -> f.column(User::getUsername)));
-
-// 获取当前时间
-Object now = userService.getValue(where -> where.eq(User::getId, 1L), func -> func.now());
-
-// 获取 MD5
-Object md5 = userService.getValue(where -> where.eq(User::getId, 1L), func -> func.md5("hello"));
+    func -> func.charLengthFunc(arg -> arg.column(User::getUsername)));
 ```
 
-## listValues — 获取值列表
+更多函数：
 
-### 字段匹配 + 取值列表
-
-```java
-// 查所有 role="user" 的用户名
-List<String> names = userService.listValues(User::getRole, "user", User::getUsername);
+```sql
+SELECT NOW()           FROM user WHERE id = 1 LIMIT 1
+SELECT MD5('hello')    FROM user WHERE id = 1 LIMIT 1
 ```
 
-### 条件 + 取值列表
+```java
+Object now = userService.getValue(where -> where.eq(User::getId, 1L), inner -> inner.now());
+Object md5 = userService.getValue(where -> where.eq(User::getId, 1L), inner -> inner.md5("hello"));
+```
+
+## listValues — 值列表
+
+### 按条件取列值列表
+
+```sql
+SELECT username FROM user WHERE role = 'user'
+```
 
 ```java
+// Stream 形式
+List<String> names = userService.stream()
+    .filter(where -> where.eq(User::getRole, "user"))
+    .mapToColumn(User::getUsername)
+    .collect(Collectors.toList());
+
+// 一行语法
 List<String> names = userService.listValues(
     where -> where.eq(User::getRole, "user"),
     User::getUsername);
 ```
 
-### 条件 + 排序 + 限制 + 取值
+### 字段匹配 + 取值列表
 
 ```java
-// 取最新 3 个用户名
+// 一行语法（单字段最简）
+List<String> names = userService.listValues(User::getRole, "user", User::getUsername);
+```
+
+### 条件 + 排序 + 限制 + 取值
+
+```sql
+SELECT username FROM user ORDER BY id DESC LIMIT 3
+```
+
+```java
+// Stream 形式
+List<String> top3 = userService.stream()
+    .sorted(order -> order.orderDesc(User::getId))
+    .limit(3)
+    .mapToColumn(User::getUsername)
+    .collect(Collectors.toList());
+
+// 一行语法
 List<String> top3 = userService.listValues(
     where -> {},
     order -> order.orderDesc(User::getId),
@@ -62,31 +117,46 @@ List<String> top3 = userService.listValues(
     User::getUsername);
 ```
 
-### 条件 + 函数表达式
+### 函数表达式列表
 
-```java
-// 获取所有用户名长度
-List<Object> lengths = userService.listValues(
-    where -> where.eq(User::getRole, "user"),
-    func -> func.charLengthFunc(f -> f.column(User::getUsername)));
-
-// 带排序限制
-List<Object> vals = userService.listValues(
-    where -> {},
-    order -> order.orderAsc(User::getId),
-    2,
-    func -> func.column(User::getUsername));
+```sql
+SELECT CHAR_LENGTH(username) FROM user WHERE role = 'user'
 ```
 
-## 方法签名一览
+```java
+// Stream 形式
+List<Object> lengths = userService.stream()
+    .filter(where -> where.eq(User::getRole, "user"))
+    .mapToValue(func -> func.charLengthFunc(arg -> arg.column(User::getUsername)))
+    .collect(Collectors.toList());
+```
 
-| 方法 | 说明 |
-|------|------|
-| `getValue(SFunction, Object, SFunction)` | 字段匹配 → 取列值 |
-| `getValue(Consumer<Where>, SFunction)` | 条件 → 取列值 |
-| `getValue(Consumer<Where>, Function<Func, V>)` | 条件 → 取函数值 |
-| `listValues(SFunction, Object, SFunction)` | 字段匹配 → 取列值列表 |
-| `listValues(Consumer<Where>, SFunction)` | 条件 → 取列值列表 |
-| `listValues(Consumer<Where>, Function<Func, V>)` | 条件 → 取函数值列表 |
-| `listValues(Consumer<Where>, Consumer<Order>, limit, SFunction)` | 条件+排序+限制 → 列值 |
-| `listValues(Consumer<Where>, Consumer<Order>, limit, Function)` | 条件+排序+限制 → 函数值 |
+## 单列去重：toSet
+
+```sql
+SELECT role FROM user
+```
+
+```java
+// 自动去重
+Set<String> roles = userService.stream().toSet(User::getRole);
+```
+
+详见 [Stream 收集器 - toSet](/pages/core/stream/collectors#toset-——-单列去重)。
+
+## 一行语法 ↔ Stream 形式对照表
+
+| 一行语法 | Stream 形式 |
+|---|---|
+| `getValue(SFunction, Object, SFunction)` | `.filter().mapToColumn().findFirst()` |
+| `getValue(Where, SFunction)` | `.filter().mapToColumn().findFirst()` |
+| `getValue(Where, Function<Func, V>)` | `.filter().mapToValue().findFirst()` |
+| `listValues(Where, SFunction)` | `.filter().mapToColumn().collect(toList())` |
+| `listValues(Where, Order, limit, SFunction)` | `.filter().sorted().limit().mapToColumn().collect()` |
+| `listValues(Where, Function<Func, V>)` | `.filter().mapToValue().collect()` |
+
+## 相关
+
+- [Stream API - mapToColumn / mapToValue](/pages/core/stream/stream#maptocolumn-——-提取单列)
+- [Stream 收集器](/pages/core/stream/collectors)
+- [函数表达式](/pages/core/wrapper/functions)

@@ -1,144 +1,209 @@
 # group
 
-分组查询支持聚合统计、HAVING 筛选、连表分组等。
+GROUP BY 分组聚合。**简单聚合优先用 `stream().toMapCount/Sum/Avg/Max/Min`**（一行搞定），复杂场景（HAVING / 多 select 列 / 按函数分组 / 连表分组）才用 `group()` 链式或 `listGroup` 一行语法。
 
-## 基本分组
+## 最常用：分组计数 → toMapCount
+
+```sql
+SELECT role, COUNT(*) FROM user GROUP BY role
+```
 
 ```java
+Map<String, Long> countByRole = userService.stream().toMapCount(User::getRole);
+// { "admin": 3, "user": 42, "guest": 17 }
+```
+
+更多收集器（`toMapSum / toMapAvg / toMapMax / toMapMin`）见 [Stream 收集器](/pages/core/stream/collectors)。
+
+## 多列分组聚合（带 DTO）
+
+```sql
+SELECT role AS status, COUNT(*) AS cnt
+FROM user
+GROUP BY role
+```
+
+```java
+// Stream 形式
+List<UserDTO> list = userService.stream()
+    .group(group -> group.groupBy(User::getRole))
+    .map(select -> select.select(User::getRole, UserDTO::getStatus)
+               .selectFunc(inner -> inner.count(), UserDTO::getCount),
+         UserDTO.class)
+    .collect(Collectors.toList());
+
+// 一行语法
 List<UserDTO> list = userService.listGroup(
     group -> group.groupBy(User::getRole),
     where -> {},
     select -> select.select(User::getRole, UserDTO::getStatus)
-          .selectFunc(func -> func.count(), UserDTO::getCount),
+                    .selectFunc(inner -> inner.count(), UserDTO::getCount),
     UserDTO.class);
-// SQL: SELECT role, COUNT(*) FROM user GROUP BY role
 ```
 
 ## 分组 + 排序 + 限制
 
-```java
-List<UserDTO> list = userService.listGroup(
-    group -> group.groupBy(User::getRole),
-    where -> {},
-    order -> order.orderDesc(User::getRole),
-    1,
-    select -> select.select(User::getRole, UserDTO::getStatus)
-          .selectFunc(func -> func.count(), UserDTO::getCount),
-    UserDTO.class);
+```sql
+SELECT role AS status, COUNT(*) AS cnt
+FROM user
+GROUP BY role
+ORDER BY role DESC
+LIMIT 1
 ```
 
-## 分组取值
-
 ```java
-// 获取每个分组的计数
-List<Object> counts = userService.listGroupValues(
-    group -> group.groupBy(User::getRole),
-    where -> {},
-    func -> func.count());
-
-// 带排序限制
-List<Long> counts = userService.listGroupValues(
-    group -> group.groupBy(User::getRole),
-    where -> {},
-    order -> order.orderDesc(User::getRole),
-    10,
-    func -> func.count());
+List<UserDTO> list = userService.stream()
+    .group(group -> group.groupBy(User::getRole))
+    .sorted(order -> order.orderDesc(User::getRole))
+    .limit(1)
+    .map(select -> select.select(User::getRole, UserDTO::getStatus)
+               .selectFunc(inner -> inner.count(), UserDTO::getCount),
+         UserDTO.class)
+    .collect(Collectors.toList());
 ```
 
-## HAVING 筛选
+## HAVING 子句
+
+```sql
+SELECT role AS status, COUNT(*) AS cnt
+FROM user
+GROUP BY role
+HAVING COUNT(*) > 1
+```
 
 ```java
-// 只保留计数 > 1 的分组
-List<UserDTO> list = userService.listGroup(
-    group -> group.groupBy(User::getRole)
-          .having(h -> h.gtFunc(f -> f.count(), f -> f.value(1))),
-    where -> {},
-    select -> select.select(User::getRole, UserDTO::getStatus)
-          .selectFunc(func -> func.count(), UserDTO::getCount),
-    UserDTO.class);
-// SQL: ... GROUP BY role HAVING COUNT(*) > 1
+userService.stream()
+    .group(group -> group.groupBy(User::getRole)
+                 .having(h -> h.gtFunc(inner -> inner.count(), arg -> arg.value(1))))
+    .map(select -> select.select(User::getRole, UserDTO::getStatus)
+               .selectFunc(inner -> inner.count(), UserDTO::getCount),
+         UserDTO.class)
+    .collect(Collectors.toList());
 ```
 
 ## 按函数分组
 
-```java
-// 按用户名前4个字符分组
-List<UserDTO> list = userService.listGroup(
-    group -> group.groupByFunc(f -> f.leftFunc(ff -> ff.column(User::getUsername), 4)),
-    where -> {},
-    select -> select.selectFunc(func -> func.leftFunc(f -> f.column(User::getUsername), 4), UserDTO::getUsername)
-          .selectFunc(func -> func.count(), UserDTO::getCount),
-    UserDTO.class);
+```sql
+SELECT LEFT(username, 4) AS username, COUNT(*) AS cnt
+FROM user
+GROUP BY LEFT(username, 4)
 ```
 
-## 连表 + 分组
+```java
+userService.stream()
+    .group(group -> group.groupByFunc(inner -> inner.leftFunc(inner -> inner.column(User::getUsername), 4)))
+    .map(select -> select.selectFunc(inner -> inner.leftFunc(arg -> arg.column(User::getUsername), 4),
+                           UserDTO::getUsername)
+               .selectFunc(inner -> inner.count(), UserDTO::getCount),
+         UserDTO.class)
+    .collect(Collectors.toList());
+```
+
+## 关联 + 分组
+
+```sql
+SELECT u.username AS username, COUNT(*) AS demandCount
+FROM user u
+LEFT JOIN demand d ON u.id = d.user_id
+GROUP BY u.username
+```
 
 ```java
-// 统计每个用户的需求数量
+// Stream 形式
+userService.stream()
+    .join(join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId))
+    .group(group -> group.groupBy(User::getUsername))
+    .map(select -> select.select(User::getUsername, UserDTO::getUsername)
+               .selectFunc(inner -> inner.count(), UserDTO::getDemandCount),
+         UserDTO.class)
+    .collect(Collectors.toList());
+
+// 一行语法
 List<UserDTO> list = userService.listGroupJoin(
     join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId),
     group -> group.groupBy(User::getUsername),
     where -> {},
     select -> select.select(User::getUsername, UserDTO::getUsername)
-          .selectFunc(func -> func.count(), UserDTO::getDemandCount),
-    UserDTO.class);
-
-// 带排序限制
-List<UserDTO> list = userService.listGroupJoin(
-    join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId),
-    group -> group.groupBy(User::getUsername),
-    where -> {},
-    order -> order.orderDesc(User::getUsername),
-    3,
-    select -> select.select(User::getUsername, UserDTO::getUsername)
-          .selectFunc(func -> func.count(), UserDTO::getDemandCount),
+                    .selectFunc(inner -> inner.count(), UserDTO::getDemandCount),
     UserDTO.class);
 ```
 
-## 连表分组取值
+## 关联分组取单值
+
+```sql
+SELECT COUNT(d.id) FROM user u LEFT JOIN demand d ON u.id = d.user_id GROUP BY u.id
+```
 
 ```java
-List<Object> counts = userService.listGroupJoinValues(
-    join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId),
-    group -> group.groupBy(User::getId),
-    where -> {},
-    func -> func.count(Demand::getId));
+List<Object> counts = userService.stream()
+    .join(join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId))
+    .group(group -> group.groupBy(User::getId))
+    .mapToValue(func -> func.count(Demand::getId))
+    .collect(Collectors.toList());
+```
 
-// 带排序限制
-List<Object> top3 = userService.listGroupJoinValues(
-    join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId),
-    group -> group.groupBy(User::getId),
-    where -> {},
-    order -> order.orderFunc(func -> func.count(Demand::getId), false),
-    3,
-    func -> func.count(Demand::getId));
+按聚合值排序取 Top3：
+
+```sql
+SELECT COUNT(d.id) FROM user u LEFT JOIN demand d ON u.id = d.user_id
+GROUP BY u.id ORDER BY COUNT(d.id) DESC LIMIT 3
+```
+
+```java
+List<Object> top3 = userService.stream()
+    .join(join -> join.leftJoin(Demand.class, User::getId, Demand::getUserId))
+    .group(group -> group.groupBy(User::getId))
+    .sorted(order -> order.orderFunc(inner -> inner.count(Demand::getId), false))
+    .limit(3)
+    .mapToValue(func -> func.count(Demand::getId))
+    .collect(Collectors.toList());
 ```
 
 ## 分组分页
 
-```java
-IPage<UserDTO> page = userService.pageGroup(
-    new Page<>(1, 10),
-    group -> group.groupBy(User::getRole),
-    where -> {},
-    select -> select.select(User::getRole, UserDTO::getStatus)
-          .selectFunc(func -> func.count(), UserDTO::getCount),
-    UserDTO.class);
+```sql
+SELECT role AS status, COUNT(*) AS cnt
+FROM user GROUP BY role
+LIMIT 10 OFFSET 0
 ```
 
-## 常用聚合函数
-
 ```java
-func -> func.count()                           // COUNT(*)
-func -> func.count(User::getId)                // COUNT(id)
-func -> func.sum(User::getCreditScore)         // SUM(credit_score)
-func -> func.avg(User::getCreditScore)         // AVG(credit_score)
-func -> func.max(User::getCreditScore)         // MAX(credit_score)
-func -> func.min(User::getCreditScore)         // MIN(credit_score)
-func -> func.sumDistinct(User::getCreditScore) // SUM(DISTINCT credit_score)
-func -> func.avgDistinct(User::getCreditScore) // AVG(DISTINCT credit_score)
-func -> func.groupConcat(User::getUsername)    // GROUP_CONCAT(username)
-func -> func.groupConcat(User::getUsername, "|") // GROUP_CONCAT(username SEPARATOR '|')
-func -> func.groupFirst(User::getUsername, order -> order.orderAsc(User::getId))  // 组内第一个
-func -> func.countPredicate(pw -> pw.eq(User::getRole, "admin"))         // 条件计数
+IPage<UserDTO> page = userService.stream()
+    .group(group -> group.groupBy(User::getRole))
+    .map(select -> select.select(User::getRole, UserDTO::getStatus)
+               .selectFunc(inner -> inner.count(), UserDTO::getCount),
+         UserDTO.class)
+    .page(new Page<>(1, 10));
 ```
+
+## 常用聚合函数（func 内）
+
+| 函数 | SQL |
+|---|---|
+| `func.count()` | `COUNT(*)` |
+| `func.count(User::getId)` | `COUNT(id)` |
+| `func.sum(User::getCreditScore)` | `SUM(credit_score)` |
+| `func.avg(User::getCreditScore)` | `AVG(credit_score)` |
+| `func.max(User::getCreditScore)` | `MAX(credit_score)` |
+| `func.min(User::getCreditScore)` | `MIN(credit_score)` |
+| `func.sumDistinct(User::getCreditScore)` | `SUM(DISTINCT credit_score)` |
+| `func.groupConcat(User::getUsername)` | `GROUP_CONCAT(username)` MySQL / `STRING_AGG(username, ',')` PG |
+| `func.groupConcat(User::getUsername, "\|")` | `GROUP_CONCAT(username SEPARATOR '\|')` |
+| `func.groupFirst(User::getUsername, order -> order.orderAsc(User::getId))` | 组内第一个 |
+| `func.countPredicate(p -> p.eq(User::getRole, "admin"))` | `SUM(CASE WHEN role='admin' THEN 1 ELSE 0 END)` |
+
+## 何时用 toMapXxx，何时用 listGroup
+
+| 场景 | 推荐 |
+|---|---|
+| 一个 key + 一个聚合值（计数/求和/平均/最大/最小） | `stream().toMapCount/Sum/Avg/Max/Min` |
+| 一个 key + 多个聚合列 / DTO 字段 | `stream().group().map(...).collect()` |
+| 要 HAVING / 按函数分组 / 关联分组 | `stream().group(...).collect()` |
+| 分页 | `stream().group().page(...)` |
+
+## 相关
+
+- [Stream 收集器](/pages/core/stream/collectors) — `toMapCount` 等下推聚合
+- [函数表达式](/pages/core/wrapper/functions)
+- [select](/pages/core/wrapper/select) — 多列 DTO 映射
+- [order](/pages/core/wrapper/order)

@@ -1,17 +1,17 @@
 # 批量写入与 WriteMode
 
-四种批量写入语义，统一接口、**方言自动适配**。一行 `saveDuplicate(...)` 在 MySQL 走 `ON DUPLICATE KEY UPDATE`、在 PG 走 `ON CONFLICT DO UPDATE`、在 DM 走 `MERGE INTO`，用户代码完全一致。
+四种批量写入语义，**方言自动适配**。`saveDuplicate(...)` 在 MySQL 走 `ON DUPLICATE KEY UPDATE`、在 PG 走 `ON CONFLICT DO UPDATE`、在 DM 走 `MERGE INTO`，**用户代码完全一致**。
 
 ## 四种 WriteMode 总览
 
-| 模式 | Service API | 主键冲突时 | 适用 |
+| 模式 | Stream 形式 | 一行语法 | 主键冲突时 |
 |---|---|---|---|
-| `INSERT` | `saveBatchWithoutId(list)` | **报错** | 确认无冲突的全新数据 |
-| `DUPLICATE` | `saveDuplicate(list, dup)` | 更新指定字段（保留未冲突字段原值） | 增量同步、计数累加 |
-| `IGNORE` | `saveIgnore(list)` | 静默跳过 | 去重插入、幂等写 |
-| `REPLACE` | `saveReplace(list)` | 全字段覆盖 | 镜像数据、全量同步 |
+| `INSERT` | `executableStream().executeInsert(list)` | `saveBatchWithoutId(list)` | **报错** |
+| `DUPLICATE` | `executableStream().executeDuplicate(list, dup)` | `saveDuplicate(list, dup)` | 更新指定字段 |
+| `IGNORE` | `executableStream().executeIgnore(list)` | `saveIgnore(list)` | 静默跳过 |
+| `REPLACE` | `executableStream().executeReplace(list)` | `saveReplace(list)` | 全字段覆盖 |
 
-## INSERT —— saveBatchWithoutId
+## INSERT — 普通批量
 
 ```sql
 INSERT INTO ms_user (id, name, age, active) VALUES
@@ -19,14 +19,14 @@ INSERT INTO ms_user (id, name, age, active) VALUES
 ```
 
 ```java
+// Stream 形式
+userService.executableStream().executeInsert(users);
+
+// 一行语法
 int rows = userService.saveBatchWithoutId(users);
 ```
 
-::: tip 名字里的 "WithoutId"
-表示**主键由用户自填**（`@TableId(IdType.INPUT)`），框架不会自动生成 ID。如果想用框架自动雪花 ID，配合 `@TableId(IdType.ASSIGN_ID)`。
-:::
-
-## DUPLICATE —— saveDuplicate
+## DUPLICATE — UPSERT
 
 冲突时**只更新你指定的列**。
 
@@ -56,23 +56,28 @@ WHEN NOT MATCHED THEN INSERT (id, name, age, active) VALUES (src.id, src.name, s
 ### 写法（三方言完全一致）
 
 ```java
+// Stream 形式
+int rows = userService.executableStream().executeDuplicate(users,
+    dup -> dup.duplicate(User::getAge));
+
+// 一行语法
 int rows = userService.saveDuplicate(users,
     dup -> dup.duplicate(User::getAge));
 ```
 
-### 更新多列
+更新多列：
 
 ```java
-userService.saveDuplicate(users,
+userService.executableStream().executeDuplicate(users,
     dup -> dup.duplicate(User::getAge)
               .duplicate(User::getActive));
 ```
 
-### 用表达式而非原值
+用表达式而非原值：
 
 ```java
 // 冲突时：score 累加 10
-userService.saveDuplicate(users,
+userService.executableStream().executeDuplicate(users,
     dup -> dup.duplicate(User::getCreditScore,
         func -> func.add(User::getCreditScore, 10)));
 ```
@@ -85,9 +90,7 @@ userService.saveDuplicate(users,
 如需精确分清"插入数 vs 更新数"，PG 用 `RETURNING (xmax = 0)` / DM 用 MERGE 返回值——这两个方言扩展尚未提供 service 层包装。
 :::
 
-## IGNORE —— saveIgnore
-
-冲突时**静默跳过**，不报错也不更新。
+## IGNORE — 冲突跳过
 
 ### MySQL
 
@@ -113,16 +116,18 @@ WHEN NOT MATCHED THEN INSERT (...) VALUES (...)
 ### 写法
 
 ```java
+// Stream 形式
+int rows = userService.executableStream().executeIgnore(users);
+
+// 一行语法
 int rows = userService.saveIgnore(users);
 ```
 
 ::: warning IGNORE 在 MySQL 的副作用
-`INSERT IGNORE` 不仅吞主键冲突，**还会把所有其他错误降级成 warning**（如长度超限、NOT NULL 违反、类型不匹配）。PG / DM 的 `ON CONFLICT DO NOTHING` / `MERGE` 只吞主键冲突，更精确。这是历史包袱，本库不修。
+`INSERT IGNORE` 不仅吞主键冲突，**还会把所有其他错误降级成 warning**（如长度超限、NOT NULL 违反、类型不匹配）。PG / DM 的 `ON CONFLICT DO NOTHING` / `MERGE` 只吞主键冲突，更精确。这是 MySQL 的历史包袱，本库不修。
 :::
 
-## REPLACE —— saveReplace
-
-冲突时**全字段覆盖**为新行内容。
+## REPLACE — 全字段覆盖
 
 ### MySQL
 
@@ -150,18 +155,22 @@ WHEN NOT MATCHED THEN INSERT (...) VALUES (...)
 ### 写法
 
 ```java
+// Stream 形式
+int rows = userService.executableStream().executeReplace(users);
+
+// 一行语法
 int rows = userService.saveReplace(users);
 ```
 
 ::: warning MySQL REPLACE 的坑
 MySQL 的 `REPLACE INTO` 是 **DELETE + INSERT**，自增 ID 会变化、外键级联会触发、触发器会跑两次（DELETE 触发器 + INSERT 触发器）。PG / DM 的 `ON CONFLICT DO UPDATE` / `MERGE` 是真正的 UPDATE，**不重置 ID、不触发 DELETE 钩子**。
 
-如果业务依赖"旧行的 ID/自增/外键稳定"，请用 PG / DM 或者改用 `saveDuplicate` 明确指定要更新的字段。
+依赖"旧行的 ID/自增/外键稳定"的业务，请用 PG / DM 或改用 `executeDuplicate` 明确指定要更新的字段。
 :::
 
 ## duplicateSet 完整能力
 
-`saveDuplicate` 的第二个参数是 `Consumer<DuplicateSetLambdaQueryWrapper<T>>`，能力比简单"指定列"丰富：
+第二个参数 `Consumer<DuplicateSetLambdaQueryWrapper<T>>` 能力比简单"指定列"丰富：
 
 ### 列 = 新行的同名列值
 
@@ -192,19 +201,19 @@ dup -> dup.duplicate(User::getUpdatedAt,
 ```java
 dup -> dup
     .duplicate(User::getAge)
-    .duplicate(User::getActive, func -> func.value(true))
-    .duplicate(User::getCreditScore, func -> func.add(User::getCreditScore, 1))
+    .duplicate(User::getActive, inner -> inner.value(true))
+    .duplicate(User::getCreditScore, inner -> inner.add(User::getCreditScore, 1))
 ```
 
 ## 选用决策
 
 ```
 要批量写一组数据，主键可能冲突吗？
-├─ 不会冲突 → saveBatchWithoutId（最快，冲突直接报错）
+├─ 不会冲突 → executeInsert / saveBatchWithoutId（最快，冲突直接报错）
 └─ 可能冲突
-    ├─ 冲突时只想跳过 → saveIgnore
-    ├─ 冲突时全量覆盖 → saveReplace
-    └─ 冲突时只更新部分字段 → saveDuplicate(用 dup 指定列)
+    ├─ 冲突时只想跳过 → executeIgnore / saveIgnore
+    ├─ 冲突时全量覆盖 → executeReplace / saveReplace
+    └─ 冲突时只更新部分字段 → executeDuplicate / saveDuplicate（用 dup 指定列）
 ```
 
 ## 批量大小建议
@@ -220,10 +229,12 @@ dup -> dup
 ```java
 List<User> all = ...; // 100k 行
 Lists.partition(all, 1000).forEach(batch ->
-    userService.saveDuplicate(batch, dup -> dup.duplicate(User::getAge)));
+    userService.executableStream().executeDuplicate(batch,
+        dup -> dup.duplicate(User::getAge)));
 ```
 
-## 相关链接
+## 相关
 
+- [Stream API - executableStream](/pages/core/stream/executable)
 - [多方言支持](/pages/core/dialect/dialect) — 三方言 SQL 形态对照与切换
-- [save / update / remove](/pages/core/service/save) — 单条与批量基础 API
+- [save / update / remove](/pages/core/service/save) — 单条与基础 API

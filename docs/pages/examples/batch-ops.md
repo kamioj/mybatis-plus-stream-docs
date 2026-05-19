@@ -87,7 +87,7 @@ int updated = userService.update(
 
 ```java
 int updated = userService.update(
-    set -> set.setFunc(User::getCreditScore, f -> f.add(User::getCreditScore, 10)),
+    set -> set.setFunc(User::getCreditScore, inner -> inner.add(User::getCreditScore, 10)),
     where -> where.eq(User::getRole, "user"));
 ```
 
