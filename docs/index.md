@@ -34,7 +34,7 @@ features:
     details: saveBatchWithoutId / saveDuplicate / saveIgnore / saveReplace 四种批量写入策略
   - icon: 🎯
     title: 零侵入
-    details: 基于 MyBatis-Plus 3.5.9 增强，Service 接口继承即用，无需修改现有代码
+    details: 基于 MyBatis-Plus 3.5.16 增强，Service 接口继承即用，无需修改现有代码
 ---
 
 ## 安装
@@ -46,34 +46,40 @@ features:
 <dependency>
     <groupId>io.github.kamioj</groupId>
     <artifactId>mybatis-plus-stream-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>4.1.1.0</version>
 </dependency>
 ```
 
 ```groovy [Gradle]
-implementation 'io.github.kamioj:mybatis-plus-stream-boot-starter:1.0.0'
+implementation 'io.github.kamioj:mybatis-plus-stream-boot-starter:4.1.1.0'
 ```
 :::
+
+> 最新版本号见上方 Maven Central 徽章。
 
 ## 一分钟上手
 
 ```java
-// 1. Service 继承 IMysqlServiceBase
-public interface UserService extends IMysqlServiceBase<User> {}
+// 1. Service 继承 IStreamService
+public interface UserService extends IStreamService<User> {}
 
-// 2. 像写 Stream 一样查询
+// 2. 像写 Stream 一样查询（lambda 调用顺序 = SQL 子句顺序）
 List<User> users = userService.stream()
-    .filter(where -> where.eq(User::getRole, "user"))
-    .sorted(order -> order.orderDesc(User::getId))
-    .limit(10)
+    .filter(where -> where.eq(User::getRole, "user"))    // WHERE
+    .sorted(order -> order.orderDesc(User::getId))        // ORDER BY
+    .limit(10)                                             // LIMIT
     .collect(Collectors.toList());
 
-// 3. 连表 + 分组 + 聚合，一行搞定
-List<UserDTO> stats = userService.listGroupJoin(
-    join -> join.leftJoin(Order.class, User::getId, Order::getUserId),
-    group -> group.groupBy(User::getId),
-    where -> where.eq(User::getRole, "user"),
-    select -> select.select(User::getUsername, UserDTO::getUsername)
-          .selectFunc(func -> func.count(), UserDTO::getOrderCount),
-    UserDTO.class);
+// 3. 连表 + 分组 + 聚合：Stream 风格一气呵成
+List<UserDTO> stats = userService.stream()
+    .map(select -> select.select(User::getUsername, UserDTO::getUsername)
+                         .selectFunc(inner -> inner.count(), UserDTO::getOrderCount),
+         UserDTO.class)                                    // SELECT
+    .join(join -> join.leftJoin(Order.class, User::getId, Order::getUserId))  // JOIN
+    .filter(where -> where.eq(User::getRole, "user"))    // WHERE
+    .group(group -> group.groupBy(User::getId))           // GROUP BY
+    .collect(Collectors.toList());
+
+// 4. SQL 下推聚合：一行 toMapCount
+Map<String, Long> byRole = userService.stream().toMapCount(User::getRole);
 ```
