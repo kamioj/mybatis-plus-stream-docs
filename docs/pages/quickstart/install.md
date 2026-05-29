@@ -8,13 +8,13 @@
 <dependency>
     <groupId>io.github.kamioj</groupId>
     <artifactId>mybatis-plus-stream-boot-starter</artifactId>
-    <version>4.1.1.2</version>
+    <version>4.1.2.0</version>
 </dependency>
 ```
 
 ::: tip
 - starter 自动引入 MyBatis-Plus **3.5.16**，无需额外添加 MP 依赖
-- 版本号格式 `{MP-major}.{MP-minor}.{MP-patch}.{本库迭代号}`，即 `4.1.1.2` 跟随 MP 4.1.1
+- 版本号格式 `{MP-major}.{MP-minor}.{MP-patch}.{本库迭代号}`，即 `4.1.2.0` 跟随 MP 4.1.1
 :::
 
 ## 数据源配置

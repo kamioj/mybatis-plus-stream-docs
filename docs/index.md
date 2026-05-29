@@ -46,12 +46,12 @@ features:
 <dependency>
     <groupId>io.github.kamioj</groupId>
     <artifactId>mybatis-plus-stream-boot-starter</artifactId>
-    <version>4.1.1.2</version>
+    <version>4.1.2.0</version>
 </dependency>
 ```
 
 ```groovy [Gradle]
-implementation 'io.github.kamioj:mybatis-plus-stream-boot-starter:4.1.1.2'
+implementation 'io.github.kamioj:mybatis-plus-stream-boot-starter:4.1.2.0'
 ```
 :::
 
